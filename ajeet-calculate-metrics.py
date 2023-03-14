@@ -1970,8 +1970,8 @@ from ekphrasis.classes.tokenizer import SocialTokenizer
 from ekphrasis.dicts.emoticons import emoticons
 
 dict_data_folder={
-      '2':{'data_file':'dataset.json','class_label':'classes_two.npy'},
-      '3':{'data_file':'dataset.json','class_label':'classes.npy'}
+      '2':{'data_file':'data/dataset.json','class_label':'classes_two.npy'},
+      '3':{'data_file':'data/dataset.json','class_label':'classes.npy'}
 }
 
 # We need to load the dataset with the labels as 'hatespeech', 'offensive', and 'normal' (3-class). 
@@ -2515,12 +2515,12 @@ def convert_to_eraser_format(dataset, method, save_split, save_path, id_division
 
 import json
 
-post_id_divisions_path = 'post_id_divisions.json'
+post_id_divisions_path = 'data/post_id_divisions.json'
 if args.split==1:
-	post_id_divisions_path = 'post_id_division_split1_seed_1234.json'
+	post_id_divisions_path = 'data/post_id_division_split1_seed_1234.json'
 
 if args.split==2:
-	post_id_divisions_path = 'post_id_division_split2_seed_12345.json'
+	post_id_divisions_path = 'data/post_id_division_split2_seed_12345.json'
 
 
 
