@@ -1319,7 +1319,7 @@ if args.method=='lrp':
 		      else:
 		          word_relevances = word_relevances/max(word_relevances)
 
-
+		      print('word_relevances :', word_relevances)
 		      all_labels.append(label)
 		      all_output_proba.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
 		      all_LRP_scores.append(word_relevances)
@@ -1436,21 +1436,40 @@ if args.method=='lrp':
 		# 	return indices_to_remove
 
 
-		def get_topK_indices(threshold, soft_rationale_predictions, k=5):
-		  index = range(len(soft_rationale_predictions))
-		  s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
-		  return s[:k]
-		#removing all tokens have LRP value>0.5 as of now! (can consider top K tokens as well)
-		  indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
+		# def get_topK_indices(threshold, soft_rationale_predictions, k=5):
+		#   index = range(len(soft_rationale_predictions))
+		#   s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
+		#   return s[:k]
+		# #removing all tokens have LRP value>0.5 as of now! (can consider top K tokens as well)
+		#   indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
 
-		  assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
-		  return indices_to_remove
-
-
+		#   assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
+		#   return indices_to_remove
 
 
-		test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['threshold'], r[0]['soft_rationale_predictions']))
-		test_df.head()
+
+
+		# test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['threshold'], r[0]['soft_rationale_predictions']))
+		# test_df.head()
+
+		def get_topK_indices( soft_rationale_predictions, k=5):
+			isTopk = args.faithfullness_filtering=='top-k'
+
+
+			if isTopk:
+				index = list(range(len(soft_rationale_predictions)))
+				s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
+				return s[:k]
+			#else removing all tokens have LRP value>threshold
+			threshold = float(args.faithfullness_filtering)
+			indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
+
+			assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
+			return indices_to_remove
+
+
+		test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
+
 
 		# test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
 		
@@ -1548,23 +1567,26 @@ if args.method=='lrp':
 
 		test_df = test_df[['annotation_id', 'rationales',  'classification', 'classification_scores', 'comprehensiveness_classification_scores', 'sufficiency_classification_scores', 'thresholded_scores']]
 
-		# print('test_df.isna(): ', test_df.isna())
-		# print('test_df.isna(): ', test_df.isna().sum())
-		test_df = test_df.astype('float64')
 
+		# Set the path of the directory and create it if it doesn't exist
+		dir_path = 'explanation_dicts'
+		if not os.path.exists(dir_path):
+		    os.makedirs(dir_path)
 
-		output_file_path = 'explanation_dicts/'+model_name+'-lrp-variant-'+str(LRP_VARIANT)+ '-faithfullness_filtering-' + args.faithfullness_filtering+'.json'
+		# Set the path of the output file
+		output_file_path = os.path.join(dir_path, model_name + '-LIME-' + 'faithfullness_filtering-' + args.faithfullness_filtering + '.json')
 
+		# Print the output file path to check if it's what you expect
+		print("Output file path:", output_file_path)
+
+		# Write the JSON data to the output file
 		test_df.to_json(output_file_path, orient="records")
 
-		# dict_data = test_df.to_dict(orient="records")
-
-		# for record in dict_data:
-		#     for key, value in record.items():
-		#         if isinstance(value, np.float32):
-		#             record[key] = float(value)
-		# with open(output_file_path, "w") as outfile:
-		#     json.dump(dict_data, outfile)
+		# Print a message to confirm that the file was saved
+		if os.path.isfile(output_file_path):
+		    print("================File saved successfully=========")
+		else:
+		    print(" ===============File not saved=================")
 
 
 
@@ -1865,16 +1887,29 @@ else:
 
 	test_df['thresholded_scores'] = thresholded_scores
 	test_df = test_df[['annotation_id', 'rationales',  'classification', 'classification_scores', 'comprehensiveness_classification_scores', 'sufficiency_classification_scores', 'thresholded_scores']]
-	print()
+	print('test_df.shape: ', test_df.shape)
 
 
-	# output_file_path = 'explanation_dicts/with_topK'+'MODEL_'+model_name+'_LIME_'+ '_thres_0_' + str(THRESHOLD)[2:] +'_topK'+'.json'
 
-	output_file_path = 'explanation_dicts/'+model_name+'-LIME-'+ '-faithfullness_filtering-' + args.faithfullness_filtering+'.json'
+	# Set the path of the directory and create it if it doesn't exist
+	dir_path = 'explanation_dicts'
+	if not os.path.exists(dir_path):
+	    os.makedirs(dir_path)
 
-	print('output_file_path: ', output_file_path)
+	# Set the path of the output file
+	output_file_path = os.path.join(dir_path, model_name + '-LIME-' + 'faithfullness_filtering-' + args.faithfullness_filtering + '.json')
+
+	# Print the output file path to check if it's what you expect
+	print("Output file path:", output_file_path)
+
+	# Write the JSON data to the output file
 	test_df.to_json(output_file_path, orient="records")
 
+	# Print a message to confirm that the file was saved
+	if os.path.isfile(output_file_path):
+	    print("================File saved successfully=========")
+	else:
+	    print(" ===============File not saved=================")
 
 
 
