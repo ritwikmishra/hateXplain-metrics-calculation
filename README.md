@@ -20,9 +20,10 @@ This 'data' folder should contain following 17-files:
 * post_id_division_split2_seed_12345.json
 
 ## utility files
-Following two files should be in the same folder in which ajeet_calculate_metrics.py file is.
+Following three files should be in the same folder in which ajeet_calculate_metrics.py file is.
 * classes.npy
 * classes_two.npy
+* metrics.py
 
 
 # FOR HATESPEECH MODEL TRAINING, example command
