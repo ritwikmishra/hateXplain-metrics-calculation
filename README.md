@@ -8,7 +8,7 @@
 
 
 ## data folder
-This 'data' folder should contain following files:
+This 'data' folder should contain following 17-files:
 * dataset.json
 * hateXplain.json
 * train_split1.json, test_split1.json, val_split1.json (for hatespeech model training on split1 data)
@@ -23,6 +23,12 @@ This 'data' folder should contain following files:
 Following two files should be in the same folder in which ajeet_calculate_metrics.py file is.
 * classes.npy
 * classes_two.npy
+
+
+# FOR HATESPEECH MODEL TRAINING, run following command
+
+`CUDA_VISIBLE_DEVICES=0 python hatespeech-training.py --split 1 --bias_in_fc True --add_cls_sep_tokens False --epochs 5 --encoder_frozen True --encoder_name bert-base-cased --checkpoint_path /home/ajeet/ajeet_falcon/ajeet/ritwik_experiments`
+
 
 
 
