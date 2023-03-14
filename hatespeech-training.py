@@ -576,9 +576,9 @@ if args.add_cls_sep_tokens==True:
 model_name =  args.encoder_name +'-'+ encoder_layers+'-'+bias_in_fc+'-'+cls_token+'-'+'dataSplit'+str(args.split)
 
 
-train_dataset = Dataset_loader(args.data_path + '/train_split'+str(args.split)+'.json')
-test_dataset = Dataset_loader(args.data_path +'/test_split'+str(args.split)+'.json')
-val_dataset = Dataset_loader(args.data_path +'/val_split'+str(args.split)+'.json')
+train_dataset = Dataset_loader(args.data_path + 'train_split'+str(args.split)+'.json')
+test_dataset = Dataset_loader(args.data_path +'vtest_split'+str(args.split)+'.json')
+val_dataset = Dataset_loader(args.data_path +'val_split'+str(args.split)+'.json')
 
 train_dataloader  = DataLoader(  dataset=train_dataset, batch_size=dataset_parameter['batch_size'])
 test_dataloader  = DataLoader(  dataset=test_dataset, batch_size=dataset_parameter['batch_size'])

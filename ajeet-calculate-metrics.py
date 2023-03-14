@@ -70,6 +70,7 @@ parser.add_argument('--method', type=str, help='method lrp/lime/both')
 parser.add_argument('--faithfullness_filtering', type=str, help='top-k tokens or above a threshold, top-k/0.5', default='top-k')
 parser.add_argument('--split', type=int, help='data split, 1/2/3')
 parser.add_argument('--model_path', type=str, help='path of model checkpoints using which LRP/LIME scores needed to calculate')
+parser.add_argument('--data_path', type=str, help='data path')
 parser.add_argument('--encoder_name', type=str, help='name of encoder, bert-base-cased/xlm-roberta-base', default='bert-base-cased')
 
 
@@ -1256,11 +1257,12 @@ model.load_state_dict(checkpoint['state_dict'])
 model_name = savepath.split('.')[0].split('/')[-1]
 
 
+
 #test file
-test_file = 'test_split'+str(args.split)+'.jsonl'
+test_file = args.data_path + 'test_split'+str(args.split)+'.jsonl'
 
 
-hateXplain_df = pd.read_json('dataset.json')
+hateXplain_df = pd.read_json(args.data_path + 'dataset.json')
 hateXplain_df = hateXplain_df.T
 # LRP_VARIANT = 0
 
@@ -1291,40 +1293,38 @@ if args.method=='lrp':
 
 		#classification and classification_scores
 		def run_lrp(test_df):
-		  all_labels  = []
-		  all_output_proba  = []
-		  all_LRP_scores = []
+			all_labels  = []
+			all_output_proba  = []
+			all_LRP_scores = []
 
-		  for i in tqdm(range(test_df.shape[0]), desc='getting LRP scores...'):
-		      text = test_df.iloc[i]['commentText']
+			for i in tqdm(range(test_df.shape[0]), desc='getting LRP scores...'):
+				text = test_df.iloc[i]['commentText']
 
-		      concerned_layers = ['flat_dense', 'fc1', 'fc2']
-		      sentence_text, p, word_relevances, output_proba = LRP(text, model, LRP_VARIANT, True, concerned_layers) #relevances with Bias=True
-		      print('output_proba: ', output_proba)
+				concerned_layers = ['flat_dense', 'fc1', 'fc2']
+				sentence_text, p, word_relevances, output_proba = LRP(text, model, LRP_VARIANT, True, concerned_layers) #relevances with Bias=True
 
 
-		      non_toxic_proba = output_proba[0][0] #since output_proba is a 2*1 array
-		      toxic_proba = output_proba[0][1]
+				non_toxic_proba = output_proba[0][0] #since output_proba is a 2*1 array
+				toxic_proba = output_proba[0][1]
 
-		      label = 'non-toxic'
-		      if toxic_proba>non_toxic_proba:
-		          label = 'toxic'
+				label = 'non-toxic'
+				if toxic_proba>non_toxic_proba:
+				  label = 'toxic'
 
-		      n = len(sentence_text.split(' '))
-		      word_relevances = word_relevances[0: n]
-		      min_relevance = min(word_relevances)
-		      if min_relevance<0:
-		          word_relevances = [relevance-min_relevance for relevance in word_relevances] #adding +ve of most -ve value to every relevance score
-		          word_relevances = word_relevances/max(word_relevances)
-		      else:
-		          word_relevances = word_relevances/max(word_relevances)
+				n = len(sentence_text.split(' '))
+				word_relevances = word_relevances[0: n]
+				min_relevance = min(word_relevances)
+				if min_relevance<0:
+				  word_relevances = [relevance-min_relevance for relevance in word_relevances] #adding +ve of most -ve value to every relevance score
+				  word_relevances = word_relevances/max(word_relevances)
+				else:
+				  word_relevances = word_relevances/max(word_relevances)
 
-		      print('word_relevances :', word_relevances)
-		      all_labels.append(label)
-		      all_output_proba.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
-		      all_LRP_scores.append(word_relevances)
-
-		  return all_labels, all_output_proba, all_LRP_scores
+				# print('word_relevances :', word_relevances)
+				all_labels.append(label)
+				all_output_proba.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+				all_LRP_scores.append(word_relevances)
+			return all_labels, all_output_proba, all_LRP_scores
 
 
 
@@ -1341,79 +1341,74 @@ if args.method=='lrp':
 		#creating rationales
 
 		def find_ranges(L):
-		# L = [1 if ele>0.5 else 0 for ele in L]
-		  if len(L)!=0:
-		      first = last = L[0]
-		      for n in L[1:]:
-		          if n - 1 == last: # Part of the group, bump the end
-		              last = n
-		          else: # Not part of the group, yield current group and start a new
-		              yield first, last
-		              first = last = n
-		      yield first, last # Yield the last group
-
+			if len(L)!=0:
+				first = last = L[0]
+				for n in L[1:]:
+					if n - 1 == last: # Part of the group, bump the end
+						last = n
+					else: # Not part of the group, yield current group and start a new
+						yield first, last
+						first = last = n
+				yield first, last # Yield the last group
 
 
 		def get_rationales(post_id, LRP_scores):
-		  soft_rationale_predictions = LRP_scores
+			soft_rationale_predictions = LRP_scores
+			curr_thres= THRESHOLD
+			flag = False    #appropriate threshold found or not
+			hard_rationale = []
+			while flag==False:
+				ones_count = 0
+				for idx in range(len(LRP_scores)):
+					if LRP_scores[idx]>curr_thres:
+						ones_count+=1
+						hard_rationale.append(1)
+					else:
+						hard_rationale.append(0)
+				if ones_count==len(LRP_scores): #if all tokensa are relevant then increase the threshold by 0.1
+					curr_thres+=0.1
+					hard_rationale = []
+				else:
+					flag = True    #appropriate threshold found!
 
 
-		  curr_thres= THRESHOLD
-		  flag = False    #appropriate threshold found or not
-		  hard_rationale = []
-		  while flag==False:
-		      ones_count = 0
-		      for idx in range(len(LRP_scores)):
-		          if LRP_scores[idx]>curr_thres:
-		              ones_count+=1
-		              hard_rationale.append(1)
-		          else:
-		              hard_rationale.append(0)
-		      if ones_count==len(LRP_scores): #if all tokensa are relevant then increase the threshold by 0.1
-		          curr_thres+=0.1
-		          hard_rationale = []
-		      else:
-		          flag = True    #appropriate threshold found!
+			rationales = []
+			indexes = sorted([i for i, each in enumerate(hard_rationale) if each==1])
+			span_list = list(find_ranges(indexes))
 
+			hard_rationale_predictions = []
+			for each in span_list:
+				if type(each)== int:
+					start = each
+					end = each+1
+				elif len(each) == 2:
+					start = each[0]
+					end = each[1]+1
+				else:
+					print('error')
 
-
-		  rationales = []
-		  indexes = sorted([i for i, each in enumerate(hard_rationale) if each==1])
-		  span_list = list(find_ranges(indexes))
-
-		  hard_rationale_predictions = []
-		  for each in span_list:
-		      if type(each)== int:
-		          start = each
-		          end = each+1
-		      elif len(each) == 2:
-		          start = each[0]
-		          end = each[1]+1
-		      else:
-		          print('error')
-
-		      hard_rationale_predictions.append({
+				hard_rationale_predictions.append({
 		          "start_token": start,
 		          "end_token": end})
 
-		  rationales.append({
+			rationales.append({
 		    'docid' : post_id,
 		    'hard_rationale_predictions': hard_rationale_predictions,
 		    'soft_rationale_predictions': soft_rationale_predictions,
 		    'threshold': curr_thres
 
 		  })
-		  return rationales
+			return rationales
 
 
 		rationales_for_output_file = []
 
 
 		for i in range(test_df.shape[0]):
-		  post_id = test_df.iloc[i]['annotation_id']
+			post_id = test_df.iloc[i]['annotation_id']
 
-		  LRP_scores = list(test_df.iloc[i]['LRP_scores'])
-		  rationales_for_output_file.append(get_rationales(post_id, LRP_scores))
+			LRP_scores = list(test_df.iloc[i]['LRP_scores'])
+			rationales_for_output_file.append(get_rationales(post_id, LRP_scores))
 
 		test_df['rationales'] = rationales_for_output_file
 
@@ -1468,21 +1463,32 @@ if args.method=='lrp':
 			return indices_to_remove
 
 
-		test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
-
-
 		# test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
+
+
+		test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
 		
+		# def get_topK_indices(threshold, soft_rationale_predictions, k=None):
+		#   # index = range(len(lst))
+		#   # s = sorted(index, reverse=True, key=lambda i: lst[i])
+		#   # return s[:k]
+		# #removing all tokens have LRP value>0.5 as of now! (can consider top K tokens as well)
+		# 	indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
+
+		# 	assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
+		# 	return indices_to_remove
+
+		# test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['threshold'], r[0]['soft_rationale_predictions']))
 
 
 		def remove_topK_relevent_words(post_tokens, to_remove_indices):
-		  new_text = [v for i, v in enumerate(post_tokens) if i not in to_remove_indices]
-		  return " ".join(new_text)
+			new_text = [v for i, v in enumerate(post_tokens) if i not in to_remove_indices]
+			return " ".join(new_text)
 
 
 		def get_topK_relevent_words(post_tokens, to_remove_indices):
-		  new_text = [post_tokens[i] for i in to_remove_indices]
-		  return " ".join(new_text)
+			new_text = [post_tokens[i] for i in to_remove_indices]
+			return " ".join(new_text)
 
 
 
@@ -1490,59 +1496,57 @@ if args.method=='lrp':
 
 		texts_after_removing = []
 		for i in range(test_df.shape[0]):
-		  token_list = test_df.iloc[i]['commentText'].split(' ')
-		  to_remove_indices = test_df.iloc[i]['to_remove_indices']
-		  texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
+			token_list = test_df.iloc[i]['commentText'].split(' ')
+			to_remove_indices = test_df.iloc[i]['to_remove_indices']
+			texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
 
 		text_of_top_relevant_tokens = []
 		for i in range(test_df.shape[0]):
-		  token_list = test_df.iloc[i]['commentText'].split(' ')
-		  to_remove_indices = test_df.iloc[i]['to_remove_indices']
-		  text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
+			token_list = test_df.iloc[i]['commentText'].split(' ')
+			to_remove_indices = test_df.iloc[i]['to_remove_indices']
+			text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
 
 		test_df['text_after_removing_relevant_tokens'] = texts_after_removing
 		test_df['text_of_top_relevant_tokens'] = text_of_top_relevant_tokens
 
-		test_df.head()
 
 		def run_model_after_removing_top_relevant_tokens(test_df):
-		  comprehensiveness_classification_scores  = []
+			comprehensiveness_classification_scores  = []
 
-		  for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
-		      text = test_df.iloc[i]['text_after_removing_relevant_tokens']
-		      label_proba,_, _ = model.predict(text)
-		      non_toxic_proba = label_proba[0] 
-		      toxic_proba = label_proba[1]
-		      label = 'non-toxic'
-		      if toxic_proba>non_toxic_proba:
-		          label = 'toxic'
-		      comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
-		  return comprehensiveness_classification_scores
+			for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
+				text = test_df.iloc[i]['text_after_removing_relevant_tokens']
+				label_proba,_, _ = model.predict(text)
+				non_toxic_proba = label_proba[0] 
+				toxic_proba = label_proba[1]
+				label = 'non-toxic'
+				if toxic_proba>non_toxic_proba:
+					label = 'toxic'
+				comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+			return comprehensiveness_classification_scores
 
 		test_df['comprehensiveness_classification_scores'] = run_model_after_removing_top_relevant_tokens(test_df)
-		test_df.head()
 
 		#suffiency score
 		def run_model_on_top_relevant_tokens(test_df):
 
-		  sufficiency_classification_scores  = []
+			sufficiency_classification_scores  = []
 
-		  for i in tqdm(range(test_df.shape[0]), desc='getting sufficiency scores...'):
-		      text = test_df.iloc[i]['text_of_top_relevant_tokens']
-
-
-		      label_proba,_, _ = model.predict(text)
-		      non_toxic_proba = label_proba[0] #since output_proba is a 2*1 array
-		      toxic_proba = label_proba[1]
-
-		      label = 'non-toxic'
-		      if toxic_proba>non_toxic_proba:
-		          label = 'toxic'
+			for i in tqdm(range(test_df.shape[0]), desc='getting sufficiency scores...'):
+				text = test_df.iloc[i]['text_of_top_relevant_tokens']
 
 
-		      sufficiency_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+				label_proba,_, _ = model.predict(text)
+				non_toxic_proba = label_proba[0] #since output_proba is a 2*1 array
+				toxic_proba = label_proba[1]
 
-		  return sufficiency_classification_scores
+				label = 'non-toxic'
+				if toxic_proba>non_toxic_proba:
+				  label = 'toxic'
+
+
+				sufficiency_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+
+			return sufficiency_classification_scores
 
 		test_df['sufficiency_classification_scores'] = run_model_on_top_relevant_tokens(test_df)
 		test_df.head()# test_df.to_json('original_test_df.json', orient="records")
@@ -1552,15 +1556,15 @@ if args.method=='lrp':
 		#thresholded_scores calculation
 		thresholded_scores = []
 		for i in range(test_df.shape[0]):
-		  temp_list = []
-		  temp_dict = {}
-		  temp_dict['threshold'] = 0.5
-		  temp_dict['comprehensiveness_classification_scores'] = test_df.iloc[i]['comprehensiveness_classification_scores']
-		  temp_dict['sufficiency_classification_scores'] = test_df.iloc[i]['sufficiency_classification_scores']
+			temp_list = []
+			temp_dict = {}
+			temp_dict['threshold'] = 0.5
+			temp_dict['comprehensiveness_classification_scores'] = test_df.iloc[i]['comprehensiveness_classification_scores']
+			temp_dict['sufficiency_classification_scores'] = test_df.iloc[i]['sufficiency_classification_scores']
 
-		  temp_list.append(temp_dict)
+			temp_list.append(temp_dict)
 
-		  thresholded_scores.append(temp_list)
+			thresholded_scores.append(temp_list)
 
 		test_df['thresholded_scores'] = thresholded_scores
 
@@ -1590,17 +1594,14 @@ if args.method=='lrp':
 
 
 
+# 	"========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
 
 else:
-	import pandas as pd
 	hateXplain_df = pd.read_json('dataset.json')
 	hateXplain_df = hateXplain_df.T
 	thresholds = [0.50, 0.55, 0.60, 0.65]
 	THRESHOLD = 0.50
 
-
-	"========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
-	import json
 
 	with open(test_file) as f:
 	    test_data = [json.loads(line) for line in f]
@@ -1610,8 +1611,8 @@ else:
 	test_texts =[]
 
 	for i in tqdm(range(len(test_data)), desc = 'getting texts and docids...'):
-	    test_docid.append(test_data[i]['annotation_id'])
-	    test_texts.append(" ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0]))
+		test_docid.append(test_data[i]['annotation_id'])
+		test_texts.append(" ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0]))
 
 
 	test_df = pd.DataFrame(test_docid, columns=['annotation_id'])
@@ -1621,60 +1622,60 @@ else:
 
 	omitted_tokens = []
 	def run_lime(test_df):
-	    all_labels  = []
-	    all_output_proba  = []
-	    all_lime_scores = []
-	    all_post_tokens_cleaned = []
-	  
-	    for i in tqdm(range(test_df.shape[0]), desc='getting lime scores...'):
-	        text = test_df.iloc[i]['commentText']
-	    # text = preprocess_text(text)
+		all_labels  = []
+		all_output_proba  = []
+		all_lime_scores = []
+		all_post_tokens_cleaned = []
+
+		for i in tqdm(range(test_df.shape[0]), desc='getting lime scores...'):
+			text = test_df.iloc[i]['commentText']
+			# text = preprocess_text(text)
 
 
-	        explanation = explainer.explain_instance(text, lime_predict_proba, num_features=50, num_samples=100)
-	        lime_score_dict = {}
-	        for ele in explanation.as_list():
-	            lime_score_dict[ele[0]] = ele[1]
+			explanation = explainer.explain_instance(text, lime_predict_proba, num_features=50, num_samples=100)
+			lime_score_dict = {}
+			for ele in explanation.as_list():
+				lime_score_dict[ele[0]] = ele[1]
 
-	        lime_score_list = []
+			lime_score_list = []
 
-	        text_tokens = text.split(' ')
-	        text_tokens = [tk for tk in text_tokens if tk!='']
+			text_tokens = text.split(' ')
+			text_tokens = [tk for tk in text_tokens if tk!='']
 
-	        for token in text_tokens:
-	            if token in lime_score_dict:
-	                lime_score_list.append(lime_score_dict[token])
-	            else:
-	                omitted_tokens.append((i, token))
-	                lime_score_list.append(0) #add 0 relevance to omitted-token
+			for token in text_tokens:
+				if token in lime_score_dict:
+					lime_score_list.append(lime_score_dict[token])
+				else:
+					omitted_tokens.append((i, token))
+					lime_score_list.append(0) #add 0 relevance to omitted-token
 
 
-	        min_lime_score = min(lime_score_list)
-	        lime_score_list = [score-min_lime_score for score in lime_score_list]
-	        max_lime_score = max(lime_score_list)
+			min_lime_score = min(lime_score_list)
+			lime_score_list = [score-min_lime_score for score in lime_score_list]
+			max_lime_score = max(lime_score_list)
 	        
-	        assert max_lime_score!=0, 'max_lime_score is 0'
+			assert max_lime_score!=0, 'max_lime_score is 0'
 
-	        lime_score_list = [score/max_lime_score for score in lime_score_list]
+			lime_score_list = [score/max_lime_score for score in lime_score_list]
 
-	        assert len(lime_score_list) == len(text_tokens), 'lime_score_list is not equal to text_tokens'
+			assert len(lime_score_list) == len(text_tokens), 'lime_score_list is not equal to text_tokens'
 
-	        output_proba = np.exp(explanation.predict_proba) #exp(of log_softmax output) --> probability distribution for the nodes
-	        non_toxic_proba = float(output_proba[0])
-	        toxic_proba = float(output_proba[1])
+			output_proba = np.exp(explanation.predict_proba) #exp(of log_softmax output) --> probability distribution for the nodes
+			non_toxic_proba = float(output_proba[0])
+			toxic_proba = float(output_proba[1])
 
-	        label = 'non-toxic'
-	        if toxic_proba>non_toxic_proba:
-	            label = 'toxic'
+			label = 'non-toxic'
+			if toxic_proba>non_toxic_proba:
+				label = 'toxic'
 
 	  
 
-	        all_labels.append(label)
-	        all_output_proba.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
-	        all_lime_scores.append(lime_score_list)
-	        all_post_tokens_cleaned.append(text_tokens)
+			all_labels.append(label)
+			all_output_proba.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+			all_lime_scores.append(lime_score_list)
+			all_post_tokens_cleaned.append(text_tokens)
 
-	    return all_labels, all_output_proba, all_lime_scores, all_post_tokens_cleaned
+		return all_labels, all_output_proba, all_lime_scores, all_post_tokens_cleaned
 
 
 
@@ -1686,74 +1687,73 @@ else:
 	test_df['lime_scores'] = all_lime_scores
 
 
-	test_df.head()
 
 	#creating rationales
 
 	def find_ranges(L):
 	  # L = [1 if ele>0.5 else 0 for ele in L]
-	  if len(L)!=0:
-	        first = last = L[0]
-	        for n in L[1:]:
-	            if n - 1 == last: # Part of the group, bump the end
-	                last = n
-	            else: # Not part of the group, yield current group and start a new
-	                yield first, last
-	                first = last = n
-	        yield first, last # Yield the last group
+		if len(L)!=0:
+			first = last = L[0]
+			for n in L[1:]:
+				if n - 1 == last: # Part of the group, bump the end
+					last = n
+				else: # Not part of the group, yield current group and start a new
+					yield first, last
+					first = last = n
+			yield first, last # Yield the last group
 
 
 
 	def get_rationales(post_id, lime_scores):
-	    soft_rationale_predictions = lime_scores
+		soft_rationale_predictions = lime_scores
 
 
-	    curr_thres= THRESHOLD
-	    flag = False    #appropriate threshold found or not
-	    hard_rationale = []
-	    while flag==False:
-	        ones_count = 0
-	        for idx in range(len(lime_scores)):
-	            if lime_scores[idx]>curr_thres:
-	                ones_count+=1
-	                hard_rationale.append(1)
-	            else:
-	                hard_rationale.append(0)
-	        if ones_count==len(lime_scores): #if all tokens are relevent then increase the threshold by 0.1
-	            curr_thres+=0.1
-	            hard_rationale = []
-	        else:
-	            flag = True    #appropriate threshold found!
+		curr_thres= THRESHOLD
+		flag = False    #appropriate threshold found or not
+		hard_rationale = []
+		while flag==False:
+			ones_count = 0
+			for idx in range(len(lime_scores)):
+				if lime_scores[idx]>curr_thres:
+					ones_count+=1
+					hard_rationale.append(1)
+				else:
+					hard_rationale.append(0)
+			if ones_count==len(lime_scores): #if all tokens are relevent then increase the threshold by 0.1
+				curr_thres+=0.1
+				hard_rationale = []
+			else:
+				flag = True    #appropriate threshold found!
 
 
 
-	    rationales = []
-	    indexes = sorted([i for i, each in enumerate(hard_rationale) if each==1])
-	    span_list = list(find_ranges(indexes))
+		rationales = []
+		indexes = sorted([i for i, each in enumerate(hard_rationale) if each==1])
+		span_list = list(find_ranges(indexes))
 
-	    hard_rationale_predictions = []
-	    for each in span_list:
-	        if type(each)== int:
-	            start = each
-	            end = each+1
-	        elif len(each) == 2:
-	            start = each[0]
-	            end = each[1]+1
-	        else:
-	            print('error')
+		hard_rationale_predictions = []
+		for each in span_list:
+			if type(each)== int:
+				start = each
+				end = each+1
+			elif len(each) == 2:
+				start = each[0]
+				end = each[1]+1
+			else:
+				print('error')
 
-	        hard_rationale_predictions.append({
+			hard_rationale_predictions.append({
 	            "start_token": start,
 	            "end_token": end})
 	      
-	    rationales.append({
+		rationales.append({
 	      'docid' : post_id,
 	      'hard_rationale_predictions': hard_rationale_predictions,
 	      'soft_rationale_predictions': soft_rationale_predictions,
 	      'threshold': curr_thres
 
 	  })
-	    return rationales
+		return rationales
 
 
 
@@ -1761,10 +1761,10 @@ else:
 
 
 	for i in tqdm(range(test_df.shape[0]), desc='getting rationales...'):
-	    post_id = test_df.iloc[i]['annotation_id']
+		post_id = test_df.iloc[i]['annotation_id']
 
-	    lime_scores = list(test_df.iloc[i]['lime_scores'])
-	    rationales_for_output_file.append(get_rationales(post_id, lime_scores))
+		lime_scores = list(test_df.iloc[i]['lime_scores'])
+		rationales_for_output_file.append(get_rationales(post_id, lime_scores))
 
 	test_df['rationales'] = rationales_for_output_file
 
@@ -1788,26 +1788,26 @@ else:
 	test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
 
 	def remove_topK_relevent_words(post_tokens, to_remove_indices):
-	    new_text = [v for i, v in enumerate(post_tokens) if i not in to_remove_indices]
-	    return " ".join(new_text)
+		new_text = [v for i, v in enumerate(post_tokens) if i not in to_remove_indices]
+		return " ".join(new_text)
 
 
 	def get_topK_relevent_words(post_tokens, to_remove_indices):
-	    new_text = [post_tokens[i] for i in to_remove_indices]
-	    return " ".join(new_text)
+		new_text = [post_tokens[i] for i in to_remove_indices]
+		return " ".join(new_text)
 
 
 	texts_after_removing = []
 	for i in range(test_df.shape[0]):
-	    token_list = test_df.iloc[i]['commentText'].split(' ')
-	    to_remove_indices = test_df.iloc[i]['to_remove_indices']
-	    texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
+		token_list = test_df.iloc[i]['commentText'].split(' ')
+		to_remove_indices = test_df.iloc[i]['to_remove_indices']
+		texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
 
 	text_of_top_relevant_tokens = []
 	for i in range(test_df.shape[0]):
-	    token_list = test_df.iloc[i]['commentText'].split(' ')
-	    to_remove_indices = test_df.iloc[i]['to_remove_indices']
-	    text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
+		token_list = test_df.iloc[i]['commentText'].split(' ')
+		to_remove_indices = test_df.iloc[i]['to_remove_indices']
+		text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
 
 	test_df['text_after_removing_relevant_tokens'] = texts_after_removing
 	test_df['text_of_top_relevant_tokens'] = text_of_top_relevant_tokens
@@ -1818,25 +1818,25 @@ else:
 
 	def run_model_after_removing_top_relevant_tokens(test_df):
 
-	    comprehensiveness_classification_scores  = []
-	  
-	    for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
-	        text = test_df.iloc[i]['text_after_removing_relevant_tokens']
+		comprehensiveness_classification_scores  = []
 
-	        label_proba,_, _ = model.predict(text)
+		for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
+			text = test_df.iloc[i]['text_after_removing_relevant_tokens']
 
-
-	        non_toxic_proba = float(label_proba[0] )
-	        toxic_proba = float(label_proba[1])
-
-	        label = 'non-toxic'
-	        if toxic_proba>non_toxic_proba:
-	            label = 'toxic'
+			label_proba,_, _ = model.predict(text)
 
 
-	        comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+			non_toxic_proba = float(label_proba[0] )
+			toxic_proba = float(label_proba[1])
 
-	    return comprehensiveness_classification_scores
+			label = 'non-toxic'
+			if toxic_proba>non_toxic_proba:
+				label = 'toxic'
+
+
+			comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+
+		return comprehensiveness_classification_scores
 
 	test_df['comprehensiveness_classification_scores'] = run_model_after_removing_top_relevant_tokens(test_df)
 	test_df.head()
@@ -1846,27 +1846,27 @@ else:
 
 	def run_model_on_top_relevant_tokens(test_df):
 
-	    sufficiency_classification_scores  = []
-	  
-	    for i in tqdm(range(test_df.shape[0]), desc='getting sufficiency scores...'):
+		sufficiency_classification_scores  = []
+
+		for i in tqdm(range(test_df.shape[0]), desc='getting sufficiency scores...'):
 	        
-	        text = test_df.iloc[i]['text_of_top_relevant_tokens']
+			text = test_df.iloc[i]['text_of_top_relevant_tokens']
 
 
-	        label_proba,_, _ = model.predict(text)
-	        non_toxic_proba = float(label_proba[0]) #since output_proba is a 2*1 array
-	        toxic_proba = float(label_proba[1])
+			label_proba,_, _ = model.predict(text)
+			non_toxic_proba = float(label_proba[0]) #since output_proba is a 2*1 array
+			toxic_proba = float(label_proba[1])
 
-	        label = 'non-toxic'
-	        if toxic_proba>non_toxic_proba:
-	            label = 'toxic'
+			label = 'non-toxic'
+			if toxic_proba>non_toxic_proba:
+				label = 'toxic'
 
-	        if non_toxic_proba==None or toxic_proba ==None:
-	            print(text)
-	            print(i)
-	        sufficiency_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+			if non_toxic_proba==None or toxic_proba ==None:
+				print(text)
+				print(i)
+			sufficiency_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
 
-	    return sufficiency_classification_scores
+		return sufficiency_classification_scores
 
 	sufficiency_classification_scores = run_model_on_top_relevant_tokens(test_df)
 	test_df['sufficiency_classification_scores'] = sufficiency_classification_scores
@@ -1875,15 +1875,15 @@ else:
 	#thresholded_scores calculation
 	thresholded_scores = []
 	for i in range(test_df.shape[0]):
-	    temp_list = []
-	    temp_dict = {}
-	    temp_dict['threshold'] = 0.5
-	    temp_dict['comprehensiveness_classification_scores'] = test_df.iloc[i]['comprehensiveness_classification_scores']
-	    temp_dict['sufficiency_classification_scores'] = test_df.iloc[i]['sufficiency_classification_scores']
+		temp_list = []
+		temp_dict = {}
+		temp_dict['threshold'] = 0.5
+		temp_dict['comprehensiveness_classification_scores'] = test_df.iloc[i]['comprehensiveness_classification_scores']
+		temp_dict['sufficiency_classification_scores'] = test_df.iloc[i]['sufficiency_classification_scores']
 
-	    temp_list.append(temp_dict)
+		temp_list.append(temp_dict)
 
-	    thresholded_scores.append(temp_list)
+		thresholded_scores.append(temp_list)
 
 	test_df['thresholded_scores'] = thresholded_scores
 	test_df = test_df[['annotation_id', 'rationales',  'classification', 'classification_scores', 'comprehensiveness_classification_scores', 'sufficiency_classification_scores', 'thresholded_scores']]
@@ -1917,8 +1917,8 @@ else:
 
 
 
-#=====================Hatexplain metrics calculation=====================
 
+# #=====================Hatexplain metrics calculation=====================
 
 
 
@@ -1970,8 +1970,8 @@ from ekphrasis.classes.tokenizer import SocialTokenizer
 from ekphrasis.dicts.emoticons import emoticons
 
 dict_data_folder={
-      '2':{'data_file':'data/dataset.json','class_label':'classes_two.npy'},
-      '3':{'data_file':'data/dataset.json','class_label':'classes.npy'}
+      '2':{'data_file':args.data_path+ 'dataset.json','class_label':'classes_two.npy'},
+      '3':{'data_file': args.data_path + 'dataset.json','class_label':'classes.npy'}
 }
 
 # We need to load the dataset with the labels as 'hatespeech', 'offensive', and 'normal' (3-class). 
@@ -2515,12 +2515,12 @@ def convert_to_eraser_format(dataset, method, save_split, save_path, id_division
 
 import json
 
-post_id_divisions_path = 'data/post_id_divisions.json'
+post_id_divisions_path = 'post_id_divisions.json'
 if args.split==1:
-	post_id_divisions_path = 'data/post_id_division_split1_seed_1234.json'
+	post_id_divisions_path = 'post_id_division_split1_seed_1234.json'
 
 if args.split==2:
-	post_id_divisions_path = 'data/post_id_division_split2_seed_12345.json'
+	post_id_divisions_path = 'post_id_division_split2_seed_12345.json'
 
 
 
@@ -2570,8 +2570,11 @@ with open("-".join(output_file_name.split('-')[0:-1])+'.jsonl', 'w') as jsonl_fi
 
 
 explanation_scores_file = "-".join(output_file_name.split('-')[0:-1]).split('/')[1]+'.jsonl'
-model_explain_output_file = output_file_name
+model_explain_output_file = output_file_name.split('/')[1]
 
+output_file_name = output_file_name.split('/')[1]
+print('explanation_scores_file: ', explanation_scores_file)
+print('model_explain_output_file: ', model_explain_output_file)
 
 
 import subprocess
@@ -2590,7 +2593,7 @@ subprocess.run(['python', 'metrics.py', '--split', 'test', '--strict', '--data_d
 
 import json
 print('======= hatexplain metrics on: '+model_explain_output_file+'==========')
-with open('explanation_result/'+output_file_name) as fp:
+with open('explanation_result/'+model_explain_output_file) as fp:
     output_data = json.load(fp)
 
 print('\nPlausibility')
@@ -2601,13 +2604,6 @@ print('AUPRC :', output_data['token_soft_metrics']['auprc'])
 print('\nFaithfulness')
 print('Comprehensiveness :', output_data['classification_scores']['comprehensiveness'])
 print('Sufficiency', output_data['classification_scores']['sufficiency'])
-
-
-
-
-
-
-
 
 
 
