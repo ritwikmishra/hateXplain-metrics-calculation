@@ -60,6 +60,7 @@ parser.add_argument('--add_cls_sep_tokens', type=bool, help='add_cls_sep_tokens 
 parser.add_argument('--epochs', type=int, help='no. of epochs to train the model', default=10)
 parser.add_argument('--encoder_frozen', type=bool, help='encoder layers frozen or not', default=False)
 parser.add_argument('--encoder_name', type=str, help='name of encoder, bert-base-cased/xlm-roberta-base', default='xlm-roberta-base')
+parser.add_argument('--data_path', type=str, help='data files path')
 parser.add_argument('--checkpoint_path', type=str, help='path where checkpoints to be saved')
 parser.add_argument('--run_ID', type=int, help='experiment run ID')
 
@@ -573,9 +574,11 @@ if args.add_cls_sep_tokens==True:
 
 
 model_name =  args.encoder_name +'-'+ encoder_layers+'-'+bias_in_fc+'-'+cls_token+'-'+'dataSplit'+str(args.split)
-train_dataset = Dataset_loader('data/train_split'+str(args.split)+'.json')
-test_dataset = Dataset_loader('data/test_split'+str(args.split)+'.json')
-val_dataset = Dataset_loader('data/val_split'+str(args.split)+'.json')
+
+
+train_dataset = Dataset_loader(args.data_path + '/train_split'+str(args.split)+'.json')
+test_dataset = Dataset_loader(args.data_path +'/test_split'+str(args.split)+'.json')
+val_dataset = Dataset_loader(args.data_path +'/val_split'+str(args.split)+'.json')
 
 train_dataloader  = DataLoader(  dataset=train_dataset, batch_size=dataset_parameter['batch_size'])
 test_dataloader  = DataLoader(  dataset=test_dataset, batch_size=dataset_parameter['batch_size'])
