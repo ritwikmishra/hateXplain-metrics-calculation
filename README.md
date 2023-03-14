@@ -4,7 +4,7 @@
 
 
 ## Python environment & Dependencies
-* create a python environment using requirement.txt file with python version-3.8 
+* create a python environment using above requirement.txt file with python version-3.8 
 
 
 ## data folder
