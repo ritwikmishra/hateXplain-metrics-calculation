@@ -1597,7 +1597,7 @@ if args.method=='lrp':
 # 	"========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
 
 else:
-	hateXplain_df = pd.read_json('dataset.json')
+	hateXplain_df = pd.read_json(args.data_path+'dataset.json')
 	hateXplain_df = hateXplain_df.T
 	thresholds = [0.50, 0.55, 0.60, 0.65]
 	THRESHOLD = 0.50
