@@ -416,7 +416,7 @@ class Dataset_loader(Dataset):
         for ele in data:
             keep_ids.append(ele['annotation_id'])
 
-        df = pd.read_json('dataset.json')
+        df = pd.read_json(args.data_path+'dataset.json')
         df = df.T
 
         df = df[df["post_id"].isin(keep_ids)]
