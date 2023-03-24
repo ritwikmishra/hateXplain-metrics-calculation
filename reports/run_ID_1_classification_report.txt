@@ -1,0 +1,86 @@
+=====================RUN ID:  1=======================
+MESSAGE : LOL
+FINE TUNING LAYERS: 
+
+flat_dense): Linear(in_features=76800, out_features=768, bias=True)
+  (relu1): ReLU()
+  (fc1): Linear(in_features=768, out_features=128, bias=True)
+  (dropout1): Dropout(p=0.1, inplace=False)
+  (relu2): ReLU()
+  (fc2): Linear(in_features=128, out_features=2, bias=True)
+  (log_softmax): LogSoftmax(dim=1)
+Bert layers learning_rate: 1e-05finetuning Layers Learning rate: 0.0003encoder_name: bert-base-cased
+encoder_frozen?: False
+bias_in_fc?: True
+cls_token?: False
+Data split: 1
+
+EPOCH: 1/5
+Training Loss: 0.555, Training Accuracy : 0.699
+Validation Loss: 0.595, Validation Accuracy : 0.676
+              precision    recall  f1-score   support
+
+           0       0.75      0.32      0.45       799
+           1       0.66      0.93      0.77      1125
+
+    accuracy                           0.67      1924
+   macro avg       0.70      0.62      0.61      1924
+weighted avg       0.70      0.67      0.63      1924
+
+
+
+EPOCH: 2/5
+Training Loss: 0.439, Training Accuracy : 0.793
+Validation Loss: 0.600, Validation Accuracy : 0.743
+              precision    recall  f1-score   support
+
+           0       0.75      0.56      0.64       799
+           1       0.73      0.87      0.80      1125
+
+    accuracy                           0.74      1924
+   macro avg       0.74      0.71      0.72      1924
+weighted avg       0.74      0.74      0.73      1924
+
+
+
+EPOCH: 3/5
+Training Loss: 0.305, Training Accuracy : 0.868
+Validation Loss: 0.645, Validation Accuracy : 0.752
+              precision    recall  f1-score   support
+
+           0       0.72      0.65      0.68       799
+           1       0.77      0.82      0.79      1125
+
+    accuracy                           0.75      1924
+   macro avg       0.74      0.73      0.74      1924
+weighted avg       0.75      0.75      0.75      1924
+
+
+
+EPOCH: 4/5
+Training Loss: 0.190, Training Accuracy : 0.922
+Validation Loss: 1.008, Validation Accuracy : 0.747
+              precision    recall  f1-score   support
+
+           0       0.74      0.60      0.66       799
+           1       0.75      0.85      0.80      1125
+
+    accuracy                           0.74      1924
+   macro avg       0.74      0.72      0.73      1924
+weighted avg       0.74      0.74      0.74      1924
+
+
+
+EPOCH: 5/5
+Training Loss: 0.124, Training Accuracy : 0.951
+Validation Loss: 1.968, Validation Accuracy : 0.708
+              precision    recall  f1-score   support
+
+           0       0.78      0.40      0.53       799
+           1       0.68      0.92      0.79      1125
+
+    accuracy                           0.71      1924
+   macro avg       0.73      0.66      0.66      1924
+weighted avg       0.73      0.71      0.68      1924
+
+

@@ -1,0 +1,179 @@
+=====================RUN ID:  23=======================
+hatespeech-training.py --split 2 --bias_in_fc True --add_cls_sep_tokens False --epochs 10 --encoder_frozen False --encoder_name xlm-roberta-base --data_path data/ --checkpoint_path . --message same params as run id 2 --dummy False --run_ID 23 --drop_out 0.40 --bert_lr 5e-7 --ft_lr 1e-6 MESSAGE : same params as run id 2
+FINE TUNING LAYERS: 
+flat_dense): Linear(in_features=76800, out_features=768, bias=True)
+  (relu1): ReLU()
+  (fc1): Linear(in_features=768, out_features=128, bias=True)
+  (dropout1): Dropout(p=0.1, inplace=False)
+  (relu2): ReLU()
+  (fc2): Linear(in_features=128, out_features=2, bias=True)
+  (log_softmax): LogSoftmax(dim=1)
+
+Bert layers learning_rate: 5e-07finetuning Layers Learning rate: 1e-06encoder_name: xlm-roberta-base
+encoder_frozen?: False
+bias_in_fc?: True
+cls_token?: False
+Data split: 2
+Thu Mar 23 19:58:30 2023
+
+EPOCH: 1/10
+Training Loss: 0.657, Training Accuracy : 0.567
+Validation Loss: 0.680, Validation Accuracy : 0.618
+
+              precision    recall  f1-score   support
+
+           0       1.00      0.00      0.01       739
+           1       0.62      1.00      0.76      1184
+
+    accuracy                           0.62      1923
+   macro avg       0.81      0.50      0.39      1923
+weighted avg       0.76      0.62      0.47      1923
+
+
+
+EPOCH: 2/10
+Training Loss: 0.594, Training Accuracy : 0.674
+Validation Loss: 0.627, Validation Accuracy : 0.668
+
+              precision    recall  f1-score   support
+
+           0       0.72      0.22      0.34       739
+           1       0.66      0.95      0.78      1184
+
+    accuracy                           0.67      1923
+   macro avg       0.69      0.58      0.56      1923
+weighted avg       0.68      0.67      0.61      1923
+
+
+
+EPOCH: 3/10
+Training Loss: 0.531, Training Accuracy : 0.731
+Validation Loss: 0.608, Validation Accuracy : 0.686
+
+              precision    recall  f1-score   support
+
+           0       0.73      0.28      0.41       739
+           1       0.68      0.93      0.79      1184
+
+    accuracy                           0.68      1923
+   macro avg       0.70      0.61      0.60      1923
+weighted avg       0.70      0.68      0.64      1923
+
+
+
+EPOCH: 4/10
+Training Loss: 0.496, Training Accuracy : 0.755
+Validation Loss: 0.609, Validation Accuracy : 0.693
+
+              precision    recall  f1-score   support
+
+           0       0.75      0.30      0.43       739
+           1       0.68      0.93      0.79      1184
+
+    accuracy                           0.69      1923
+   macro avg       0.71      0.62      0.61      1923
+weighted avg       0.71      0.69      0.65      1923
+
+
+
+EPOCH: 5/10
+Training Loss: 0.481, Training Accuracy : 0.764
+Validation Loss: 0.579, Validation Accuracy : 0.708
+
+              precision    recall  f1-score   support
+
+           0       0.74      0.37      0.49       739
+           1       0.70      0.92      0.80      1184
+
+    accuracy                           0.71      1923
+   macro avg       0.72      0.64      0.64      1923
+weighted avg       0.72      0.71      0.68      1923
+
+
+
+EPOCH: 6/10
+Training Loss: 0.465, Training Accuracy : 0.775
+Validation Loss: 0.572, Validation Accuracy : 0.717
+
+              precision    recall  f1-score   support
+
+           0       0.74      0.41      0.53       739
+           1       0.71      0.91      0.80      1184
+
+    accuracy                           0.72      1923
+   macro avg       0.73      0.66      0.66      1923
+weighted avg       0.72      0.72      0.69      1923
+
+
+
+EPOCH: 7/10
+Training Loss: 0.459, Training Accuracy : 0.779
+Validation Loss: 0.562, Validation Accuracy : 0.724
+
+              precision    recall  f1-score   support
+
+           0       0.74      0.43      0.55       739
+           1       0.72      0.91      0.80      1184
+
+    accuracy                           0.72      1923
+   macro avg       0.73      0.67      0.67      1923
+weighted avg       0.73      0.72      0.70      1923
+
+
+
+EPOCH: 8/10
+Training Loss: 0.450, Training Accuracy : 0.784
+Validation Loss: 0.555, Validation Accuracy : 0.730
+
+              precision    recall  f1-score   support
+
+           0       0.74      0.46      0.57       739
+           1       0.73      0.90      0.80      1184
+
+    accuracy                           0.73      1923
+   macro avg       0.73      0.68      0.68      1923
+weighted avg       0.73      0.73      0.71      1923
+
+
+
+EPOCH: 9/10
+Training Loss: 0.448, Training Accuracy : 0.786
+Validation Loss: 0.546, Validation Accuracy : 0.738
+
+              precision    recall  f1-score   support
+
+           0       0.74      0.49      0.59       739
+           1       0.74      0.90      0.81      1184
+
+    accuracy                           0.74      1923
+   macro avg       0.74      0.69      0.70      1923
+weighted avg       0.74      0.74      0.72      1923
+
+
+
+EPOCH: 10/10
+Training Loss: 0.460, Training Accuracy : 0.774
+Validation Loss: 0.508, Validation Accuracy : 0.755
+
+              precision    recall  f1-score   support
+
+           0       0.71      0.61      0.66       739
+           1       0.78      0.85      0.81      1184
+
+    accuracy                           0.76      1923
+   macro avg       0.74      0.73      0.73      1923
+weighted avg       0.75      0.76      0.75      1923
+
+
+Thu Mar 23 20:49:13 2023
+Testing Accuracy : 0.752
+              precision    recall  f1-score   support
+
+           0       0.73      0.59      0.65       762
+           1       0.76      0.86      0.81      1160
+
+    accuracy                           0.75      1922
+   macro avg       0.75      0.72      0.73      1922
+weighted avg       0.75      0.75      0.74      1922
+
+
