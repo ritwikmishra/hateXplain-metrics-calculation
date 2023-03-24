@@ -1,0 +1,3 @@
+# Specifies intentionally untracked files to ignore
+trained_models/
+Model_Eval/
