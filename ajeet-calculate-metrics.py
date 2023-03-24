@@ -2614,12 +2614,12 @@ import os
 
 
 
-if not os.path.exists('Model_Eval'):
-    os.makedirs('Model_Eval')
+if not os.path.exists('Model_Eval'+rid):
+    os.makedirs('Model_Eval'+rid)
 
 method = 'union'
 save_split = True
-save_path = 'Model_Eval/'  #The dataset in Eraser Format will be stored here.
+save_path = 'Model_Eval'+rid+'/'  #The dataset in Eraser Format will be stored here.
 convert_to_eraser_format(training_data, method, save_split, save_path, id_division)
 
 
@@ -2664,7 +2664,7 @@ import subprocess
 env = os.environ.copy()
 env['PYTHONPATH'] = './:' + env.get('PYTHONPATH', '')
 
-subprocess.run(['python', 'metrics.py', '--split', 'test', '--strict', '--data_dir', 'Model_Eval/', '--results', 'explanation_dicts/'+explanation_scores_file, '--score_file', 'explanation_result/'+model_explain_output_file], env=env)
+subprocess.run(['python', 'metrics.py', '--split', 'test', '--strict', '--data_dir', 'Model_Eval'+rid+'/', '--results', 'explanation_dicts/'+explanation_scores_file, '--score_file', 'explanation_result/'+model_explain_output_file], env=env)
 
 
 # subprocess.run(['PYTHONPATH=./:$PYTHONPATH', 'python', 'metrics.py', '--split', 'test', '--strict', '--data_dir', 'Model_Eval/', '--results', 'explanation_dicts/'+explanation_scores_file, '--score_file', 'explanation_result/'+model_explain_output_file])
@@ -2684,7 +2684,7 @@ print('\nFaithfulness')
 print('Comprehensiveness :', output_data['classification_scores']['comprehensiveness'])
 print('Sufficiency', output_data['classification_scores']['sufficiency'])
 
-rid = re.search(r'\d+',args.model_path)[0]
+
 report_path = 'reports/'+'run_ID_'+str(rid)+'_classification_report.txt'
 with open(report_path, 'a') as f:
     f.write('End '+datetime.datetime.now(IST).strftime("%c")+'\n')
