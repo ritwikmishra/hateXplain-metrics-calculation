@@ -31,7 +31,7 @@ Following three files should be in the same folder in which ajeet_calculate_metr
 
 
 # FOR HATEXPLAIN METRIC CALCULATION, example command
-`CUDA_VISIBLE_DEVICES=1 python ajeet-calculate-metrics.py.py --method lrp --faithfullness_filtering top-k --split 1 --model_path /home/ajeet/ajeet_falcon/ajeet/ritwik_experiments/trained_models/hateSpeechModel-bert-base-cased-freezed-bias-in-fc-cls-token-dataSplit1_epoch_5.pth.t7 --data_path DATA_PATH --encoder_name bert-base-cased`
+`CUDA_VISIBLE_DEVICES=1 python ajeet-calculate-metrics.py.py --method lrp --faithfullness_filtering top-k --split 1 --model_path PATH_TO_MODEL --data_path PATH_TO_DATA_FOLDER --encoder_name bert-base-cased`
 
 
 

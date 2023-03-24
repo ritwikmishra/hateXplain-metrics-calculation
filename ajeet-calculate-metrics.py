@@ -717,128 +717,19 @@ class MODEL(nn.Module):
 
     def predict(self, text):
         # processed_text = preprocess_text(text)
+  
+
+
         # input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik([processed_text])
         input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik2([text])
 
         input_ids, attention_mask, word_break, word_break_len = torch.tensor(input_ids), torch.tensor(attention_mask),  torch.tensor(word_break), torch.tensor(word_break_len)
 
 
-      #put all feature variable on device
+        # put all feature variable on device
         input_ids, attention_mask, word_break, word_break_len = input_ids.to(device), attention_mask.to(device),  word_break.to(device), word_break_len.to(device)
 
-      #get prediction from model
-        with torch.no_grad():
-            logits, first_fc_layer_emb, word_level_embedding_flat = self.forward(input_ids, attention_mask, word_break, word_break_len)
-
-
-
-
-        #token level embeddings
-        model_output = self.bert_model(input_ids=input_ids, 
-                                  attention_mask=attention_mask)
-        token_level_embedding = model_output.last_hidden_state
-
-
-
-        # #word level embeddings initialized 
-
-        word_level_embedding = torch.zeros(input_ids.shape[0], dataset_parameter['max_seq_len'], bert_model_parameter['second_last_layer_size'])
-     
-
-
-        #iterate all text in one batch 
-        for batch_no in range(0, input_ids.shape[0]):
-
-        #copy first or starting padding
-            start, end = 0, 0
-
-            for word_break_counter in range (0, word_level_len[batch_no]):
-                    start = end
-
-
-                    end = start+word_level[batch_no][word_break_counter]
-
-                    word_level_embedding[batch_no][word_break_counter] = torch.mean(token_level_embedding[batch_no][start:end], 0, True)
-
-        word_level_embedding = word_level_embedding.to(device)
-
-        # word_level_embedding[:, 1:] =0.0
-
-
-        
-        # word_level_embedding = token_level_embedding
-
-        if bert_model_parameter['word_level_mean_way']==1:
-                word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
-
-                output = torch.mean(word_level_embedding, 1)
-
-
-
-        elif bert_model_parameter['word_level_mean_way']==2:
-                word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
-
-                word_level_embedding_mean = word_level_embedding * self.word_level_emb_vertical_weights
-                output = torch.mean(word_level_embedding_mean, 1)
-
-
-
-
-        elif bert_model_parameter['word_level_mean_way']==3:
-                word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
-
-                word_level_embedding_mean =  word_level_embedding.permute(0,2,1) * self.word_level_emb_horizontal_weights
-                output = torch.mean(word_level_embedding_mean.permute(0,2,1), 1)
-
-
-                
-        elif bert_model_parameter['word_level_mean_way']==4:
-                word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
-
-                word_level_embedding_mean = word_level_embedding * self.word_level_emb_batch_weights
-                output = torch.mean(word_level_embedding_mean, 1)
-
-        elif bert_model_parameter['word_level_mean_way']==5:
-                word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
-  
-              
-                output = model.flat_dense(word_level_embedding_flat)
-           
-
-        first_fc_layer_emb = output #its size will be 768 in any mean-type way
-     
-        x = self.fc1(output)
-        # print('fc1 output: ', x)
-        x = self.relu1(x)
-        x = self.dropout1(x)
-        x = self.fc2(x)    
-        # print('fc2 output: ', x)
-      
-        x = self.log_softmax(x)
-        # print('softmax output: ', x)
-
-        return x, first_fc_layer_emb, word_level_embedding_flat
-        # return output, dense_layer_emb,  word_level_embedding_flat #also returning word_level_embedding to use it in calculating relevance at word-level
-
-
-
-
-
-    def predict(self, text):
-#         processed_text = preprocess_text(text)
-  
-
-
-#         input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik([processed_text])
-        input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik2([text])
-
-        input_ids, attention_mask, word_break, word_break_len = torch.tensor(input_ids), torch.tensor(attention_mask),  torch.tensor(word_break), torch.tensor(word_break_len)
-
-
-      #put all feature variable on device
-        input_ids, attention_mask, word_break, word_break_len = input_ids.to(device), attention_mask.to(device),  word_break.to(device), word_break_len.to(device)
-
-      #get prediction from model
+        # get prediction from model
         with torch.no_grad():
             logits, first_fc_layer_emb, word_level_embedding_flat = self.forward(input_ids, attention_mask, word_break, word_break_len)
 
