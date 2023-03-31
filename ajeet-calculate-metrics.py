@@ -1593,13 +1593,20 @@ if args.method!='lime':
 
         texts_after_removing = []
         for i in range(test_df.shape[0]):
-            token_list = test_df.iloc[i]['commentText'].split(' ')
+            temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
+            token_list = temp_text.split(' ')
+            
+            # token_list = test_df.iloc[i]['commentText'].split(' ')
             to_remove_indices = test_df.iloc[i]['to_remove_indices']
             texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
 
         text_of_top_relevant_tokens = []
         for i in range(test_df.shape[0]):
-            token_list = test_df.iloc[i]['commentText'].split(' ')
+
+            temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
+            token_list = temp_text.split(' ')
+
+
             to_remove_indices = test_df.iloc[i]['to_remove_indices']
             text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
 
@@ -1643,7 +1650,7 @@ if args.method!='lime':
 
                 # assert non_toxic_proba is True, 'non_toxic_proba is NaN'
                 # assert toxic_proba is True, 'toxic_proba is NaN'
-                
+
                 non_toxic_proba = label_proba[0] 
                 toxic_proba = label_proba[1]
 
@@ -1793,8 +1800,8 @@ else :
                 lime_score_dict[ele[0]] = ele[1]
 
             lime_score_list = []
-
-            text_tokens = text.split(' ')
+            temp_text = tokenize_my_sent(text)
+            text_tokens = temp_text.split(' ')
             text_tokens = [tk for tk in text_tokens if tk!='']
 
             for token in text_tokens:
@@ -1958,13 +1965,16 @@ else :
 
     texts_after_removing = []
     for i in range(test_df.shape[0]):
-        token_list = test_df.iloc[i]['commentText'].split(' ')
+        temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
+        token_list = temp_text.split(' ')
         to_remove_indices = test_df.iloc[i]['to_remove_indices']
         texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
 
     text_of_top_relevant_tokens = []
     for i in range(test_df.shape[0]):
-        token_list = test_df.iloc[i]['commentText'].split(' ')
+        temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
+        token_list = temp_text.split(' ')
+
         to_remove_indices = test_df.iloc[i]['to_remove_indices']
         text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
 
