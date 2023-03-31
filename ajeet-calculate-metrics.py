@@ -69,6 +69,7 @@ print(f'Training on {device}')
 import argparse, sys
 
 parser = argparse.ArgumentParser(description='to generate LRP & LIME scores on test_data in ERASER format')
+
 parser.add_argument('--method', type=str, help='method if lrp then enter 0/1/2, if lime then enter "lime"')
 parser.add_argument('--faithfullness_filtering', type=str, help='top-k tokens or above a threshold, top-k/0.5', default='top-k')
 parser.add_argument('--split', type=int, help='data split, 1/2/3')
@@ -77,6 +78,7 @@ parser.add_argument('--data_path', type=str, help='data path')
 parser.add_argument('--encoder_name', type=str, help='name of encoder, bert-base-cased/xlm-roberta-base', default='bert-base-cased')
 parser.add_argument('--drop_out', type=float, default=0.4)
 parser.add_argument('--encoder_frozen', type=str, help='encoder layers frozen or not', default='False')
+parser.add_argument('--add_cls_sep_tokens', type=str, help='add_cls_sep_tokens or not, True/False', default=False)
 
 args = parser.parse_args()
 
@@ -221,6 +223,10 @@ def preprocess_text(text):
     text = remove_special_char(text)
     text = text.lower()
     text = remove_mentions(text) 
+
+
+
+
     text = remove_newline(text)
     text = remove_extra_space(text)
     return text
@@ -268,18 +274,33 @@ from transformers import AutoTokenizer
 
 nlp = stanza.Pipeline('en',processors='tokenize', download_method=2) # put desired language here
 # stanza.Pipeline('en',download_method=2)
-add_cls_sep_token_ids = True
+add_cls_sep_token_ids = False
+if args.add_cls_sep_tokens=='True':
+    add_cls_sep_token_ids = True
+
+def tokenize_my_sent(text):
+    if not isinstance(text, str):
+        raise TypeError("Input text must be a string.")
+
+    tokenized_text_i = []
+    doc = nlp(text)
+    for sents in doc.sentences:
+        for word in sents.words:
+
+            if len(tokenizer.tokenize(word.text)) > 0:
+                tokenized_text_i.append(word.text)
+    return ' '.join(tokenized_text_i)
 
 
 def filter_for_max_len(sent_list, label_list):
     sents2, labels2 = [], []
     for s, l in tqdm(zip(sent_list, label_list), total=len(sent_list), ncols=150, desc='filtering'):
-        tokenized_text_i = []
-        doc = nlp(s)
-        for sents in doc.sentences:
-            for word in sents.words:
-                tokenized_text_i.append(word.text)
-        s = ' '.join(tokenized_text_i)
+        # tokenized_text_i = []
+        # doc = nlp(s)
+        # for sents in doc.sentences:
+        #     for word in sents.words:
+        #         tokenized_text_i.append(word.text)
+        s =  tokenize_my_sent(s)#' '.join(tokenized_text_i)
         if len(tokenizer(s,return_tensors="pt")['input_ids'][0]) <= dataset_parameter['max_seq_len']:
             sents2.append(s)
             labels2.append(l)
@@ -296,8 +317,8 @@ def tokenize_word_ritwik(text):
         # tokenized_text_i = []
         # doc = nlp(text_i)
         # for sents in doc.sentences:
-        # 	for word in sents.words:
-        # 		tokenized_text_i.append(word.text)
+        #   for word in sents.words:
+        #       tokenized_text_i.append(word.text)
         tokenized_text_i = text_i.split() # since humne pehle filtering kardi hai, yahan pe dobara stanza se pass karne ki zarurat ni hai
 
         for i, word in enumerate(tokenized_text_i):
@@ -365,8 +386,8 @@ def tokenize_word_ritwik2(text):
         # tokenized_text_i = []
         # doc = nlp(text_i)
         # for sents in doc.sentences:
-        # 	for word in sents.words:
-        # 		tokenized_text_i.append(word.text)
+        #   for word in sents.words:
+        #       tokenized_text_i.append(word.text)
         tokenized_text_i = text_i.split() # since humne pehle filtering kardi hai, yahan pe dobara stanza se pass karne ki zarurat ni hai
 
         for i, word in enumerate(tokenized_text_i):
@@ -657,7 +678,7 @@ class MODEL(nn.Module):
             for param in self.bert_model.parameters():
                 param.requires_grad = False
 
-    def forward(self, input_ids, attention_mask, word_level, word_level_len):
+    def forward(self, input_ids, attention_mask, word_level, word_level_len, ID=None):
         """
         Pass input data from all layer of model
 
@@ -678,12 +699,24 @@ class MODEL(nn.Module):
         word_level_embedding = torch.zeros(input_ids.shape[0], dataset_parameter['max_seq_len'], bert_model_parameter['second_last_layer_size'])
 
         # iterate all text in one batch
+  
+
         for batch_no in range(0, input_ids.shape[0]):
             start, end = 0, 0
+
             for word_break_counter in range(0, word_level_len[batch_no]):
                 start = end
+                # print('start: ', start)
+                # print('end: ', end)
+                # input()
+
+
+
                 end = start + word_level[batch_no][word_break_counter]
                 word_level_embedding[batch_no][word_break_counter] = torch.mean(token_level_embedding[batch_no][start:end], 0, True)
+                # print('torch.mean(token_level_embedding[batch_no][start:end], 0, True): ', torch.mean(token_level_embedding[batch_no][start:end], 0, True))
+                # print()
+                # input()
         word_level_embedding = word_level_embedding.to(device)
 
         if bert_model_parameter['word_level_mean_way']==1:
@@ -706,12 +739,35 @@ class MODEL(nn.Module):
             output = model.flat_dense(word_level_embedding_flat)
         first_fc_layer_emb = output #its size will be 768 in any mean-type way
 
+        if ID:
+            has_nan = np.isnan(word_level_embedding.cpu().detach().numpy()).any()
+            if has_nan:
+                print('word_level_embedding has nan: ', has_nan)
+
+            print('word_level_embedding: ', word_level_embedding)
+            # input()
+        if ID:
+            print('flat_dense output: ', output)
+            # input()
         x = self.relu1(output)
         x = self.fc1(output)
+        if ID:
+            print('\n\nfc1 output: ', x)
+            # input()
+
+
         x = self.relu2(x)
         x = self.dropout1(x)
-        x = self.fc2(x)    
+        x = self.fc2(x)
+        if ID:
+            print('\n\nfc2 output: ', x)
+            # input()
         x = self.log_softmax(x)
+        if ID:
+            print('\n\nlog_softmax output: ', x)
+            # input()
+
+
         return x, first_fc_layer_emb, word_level_embedding_flat
         # return output, dense_layer_emb,  word_level_embedding_flat #also returning word_level_embedding to use it in calculating relevance at word-level
 
@@ -719,9 +775,10 @@ class MODEL(nn.Module):
         # processed_text = preprocess_text(text)
   
 
-
+        text  = tokenize_my_sent(text)
         # input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik([processed_text])
         input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik2([text])
+
 
         input_ids, attention_mask, word_break, word_break_len = torch.tensor(input_ids), torch.tensor(attention_mask),  torch.tensor(word_break), torch.tensor(word_break_len)
 
@@ -736,6 +793,35 @@ class MODEL(nn.Module):
 
         label_proba = np.exp(logits.detach().cpu().numpy()[0])
         return label_proba, first_fc_layer_emb, word_level_embedding_flat
+
+    def predict2(self, text, ID):
+        # processed_text = preprocess_text(text)
+  
+
+
+        # input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik([processed_text])
+        input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik2([text])
+
+
+        if any(item is np.nan for item in input_ids):
+            print("There is a NaN value in the input_ids.")
+
+
+        input_ids, attention_mask, word_break, word_break_len = torch.tensor(input_ids), torch.tensor(attention_mask),  torch.tensor(word_break), torch.tensor(word_break_len)
+
+
+        # put all feature variable on device
+        input_ids, attention_mask, word_break, word_break_len = input_ids.to(device), attention_mask.to(device),  word_break.to(device), word_break_len.to(device)
+
+        # get prediction from model
+        with torch.no_grad():
+            logits, first_fc_layer_emb, word_level_embedding_flat = self.forward(input_ids, attention_mask, word_break, word_break_len, ID)
+
+
+        label_proba = np.exp(logits.detach().cpu().numpy()[0])
+        return label_proba, first_fc_layer_emb, word_level_embedding_flat
+
+
 
 model = MODEL(bert)
 model = model.to(device)
@@ -960,7 +1046,6 @@ def LRP(sentence, model, lrp_variant, used_bias, concerned_layers):
      
 
     output_activation = activations[-1]
-    output_proba = output_activation
  
     #----------------------NOT DOING STEP-3---------------------
     max_activation = output_activation.max()        
@@ -1223,6 +1308,12 @@ checkpoint = torch.load(savepath, map_location=torch.device('cpu'))
 model.load_state_dict(checkpoint['model_state_dict']) 
 
 
+
+
+# a, b, c = model.predict('i know sum bitch made ass niggas man 🤦 🏾 ‍ ♂️ 🤦 🏾 ‍ ♂️ 🤦 🏾 ‍ ♂️')
+# print('pred proba: ', a)
+# input('wait here')
+
 model_name = savepath.split('.')[0].split('/')[-1]
 
 print('model_name: ', model_name)
@@ -1274,15 +1365,43 @@ if args.method!='lime':
                 sentence_text, p, word_relevances, output_proba = LRP(text, model, LRP_VARIANT, True, concerned_layers) #relevances with Bias=True
 
 
-                non_toxic_proba = output_proba[0][0] #since output_proba is a 2*1 array
-                toxic_proba = output_proba[0][1]
+                has_nan = np.isnan(output_proba).any()
+                if has_nan:
+                    print('line 1330: output_proba has NaN values!')
+                    print('annotation_id: ', test_df.iloc[i]['annotation_id'])
+
+                    # input()
+
+                # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+
+                #     print('text: ', text)
+                #     print()
+                #     print(output_proba)
+                #     non_toxic_proba = 0.43
+                #     toxic_proba = 0.57
+
+                #     print()
+                #     print()
+
+                # else:
+                #     non_toxic_proba = output_proba[0] 
+                #     toxic_proba = output_proba[1]
+
+                non_toxic_proba = output_proba[0] 
+                toxic_proba = output_proba[1]
 
                 label = 'non-toxic'
                 if toxic_proba>non_toxic_proba:
                   label = 'toxic'
 
-                n = len(sentence_text.split(' '))
-                word_relevances = word_relevances[0: n]
+                tokenized_sent = tokenize_my_sent(sentence_text)
+                n = len(tokenized_sent.split(' '))
+
+                if add_cls_sep_token_ids==True:
+                    word_relevances = word_relevances[0: n+2]
+                else:
+                    word_relevances = word_relevances[0: n]
+
                 min_relevance = min(word_relevances)
                 if min_relevance<0:
                   word_relevances = [relevance-min_relevance for relevance in word_relevances] #adding +ve of most -ve value to every relevance score
@@ -1304,6 +1423,10 @@ if args.method!='lime':
         test_df['classification'] = all_labels
         test_df['classification_scores'] = all_output_proba
         test_df['LRP_scores'] = all_LRP_scores
+
+        if any(item is np.nan for item in all_output_proba):
+            print("There is a NaN value in the classification_scores.")
+
 
 
 
@@ -1386,19 +1509,19 @@ if args.method!='lime':
 
 
         # def get_topK_indices( soft_rationale_predictions, k=5):
-        # 	isTopk = args.faithfullness_filtering=='top-k'
+        #   isTopk = args.faithfullness_filtering=='top-k'
 
 
-        # 	if isTopk:
-        # 		index = list(range(len(soft_rationale_predictions)))
-        # 		s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
-        # 		return s[:k]
-        # 	#else removing all tokens have LRP value>threshold
-        # 	threshold = float(args.faithfullness_filtering)
-        # 	indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
+        #   if isTopk:
+        #       index = list(range(len(soft_rationale_predictions)))
+        #       s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
+        #       return s[:k]
+        #   #else removing all tokens have LRP value>threshold
+        #   threshold = float(args.faithfullness_filtering)
+        #   indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
 
-        # 	assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
-        # 	return indices_to_remove
+        #   assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
+        #   return indices_to_remove
 
 
         # def get_topK_indices(threshold, soft_rationale_predictions, k=5):
@@ -1436,17 +1559,21 @@ if args.method!='lime':
         # test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
 
 
-        test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
+        to_remove_indices = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
         
+        if any(item is None for item in to_remove_indices):
+            print("There is a NaN value in the to_remove_indices.")
+
+        test_df['to_remove_indices'] = to_remove_indices
         # def get_topK_indices(threshold, soft_rationale_predictions, k=None):
         #   # index = range(len(lst))
         #   # s = sorted(index, reverse=True, key=lambda i: lst[i])
         #   # return s[:k]
         # #removing all tokens have LRP value>0.5 as of now! (can consider top K tokens as well)
-        # 	indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
+        #   indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
 
-        # 	assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
-        # 	return indices_to_remove
+        #   assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
+        #   return indices_to_remove
 
         # test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['threshold'], r[0]['soft_rationale_predictions']))
 
@@ -1485,16 +1612,57 @@ if args.method!='lime':
 
             for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
                 text = test_df.iloc[i]['text_after_removing_relevant_tokens']
+
+                # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+                #     label_proba,_, _ = model.predict2(text, '1179098097160470529_twitter')
+                # else:
+                #     label_proba,_, _ = model.predict(text)
+
                 label_proba,_, _ = model.predict(text)
+                has_nan = np.isnan(label_proba).any()
+                if has_nan:
+                    print('line 1561: label_proba has NaN values')
+                    print('annotation_id: ', test_df.iloc[i]['annotation_id'])
+
+                    # input()
+
+                # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+
+                    # print('text: ', text)
+                    # print()
+                    # print(label_proba)
+                    # non_toxic_proba = 0.45
+                    # toxic_proba = 0.55
+
+                    # print()
+                    # print()
+
+                # else:
+                #     non_toxic_proba = label_proba[0] 
+                #     toxic_proba = label_proba[1]
+
+                # assert non_toxic_proba is True, 'non_toxic_proba is NaN'
+                # assert toxic_proba is True, 'toxic_proba is NaN'
+                
                 non_toxic_proba = label_proba[0] 
                 toxic_proba = label_proba[1]
+
+
                 label = 'non-toxic'
                 if toxic_proba>non_toxic_proba:
                     label = 'toxic'
+
                 comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
             return comprehensiveness_classification_scores
 
-        test_df['comprehensiveness_classification_scores'] = run_model_after_removing_top_relevant_tokens(test_df)
+        comprehensiveness_classification_scores = run_model_after_removing_top_relevant_tokens(test_df)
+
+        if any(item is np.nan for item in comprehensiveness_classification_scores):
+            print("There is a NaN value in the comprehensiveness_classification_scores.")
+
+
+
+        test_df['comprehensiveness_classification_scores']  = comprehensiveness_classification_scores
 
         #suffiency score
         def run_model_on_top_relevant_tokens(test_df):
@@ -1506,6 +1674,12 @@ if args.method!='lime':
 
 
                 label_proba,_, _ = model.predict(text)
+                has_nan = np.isnan(label_proba).any()
+                if has_nan:
+                    print('line 1604: label_proba has NaN values')
+                    print('annotation_id: ', test_df.iloc[i]['annotation_id'])
+                    # input()
+
                 non_toxic_proba = label_proba[0] #since output_proba is a 2*1 array
                 toxic_proba = label_proba[1]
 
@@ -1518,7 +1692,9 @@ if args.method!='lime':
 
             return sufficiency_classification_scores
 
-        test_df['sufficiency_classification_scores'] = run_model_on_top_relevant_tokens(test_df)
+        sufficiency_classification_scores = run_model_on_top_relevant_tokens(test_df)
+        test_df['sufficiency_classification_scores'] = sufficiency_classification_scores
+
         test_df.head()# test_df.to_json('original_test_df.json', orient="records")
 
 
@@ -1548,10 +1724,19 @@ if args.method!='lime':
             os.makedirs(dir_path)
 
         # Set the path of the output file
-        output_file_path = os.path.join(dir_path, model_name + '-LIME-' + 'faithfullness_filtering-' + args.faithfullness_filtering + '.json')
+        output_file_path = os.path.join(dir_path, model_name + '-dataSplit'+str(args.split)+ '-LRP'+str(LRP_VARIANT) + '-faithfullness_filtering-' + args.faithfullness_filtering +'.json')
 
         # Print the output file path to check if it's what you expect
         print("Output file path:", output_file_path)
+
+        print('test_df.isna().sum(): ', test_df.isna().sum())
+
+        is_nan = test_df.apply(pd.isna).any(axis=1).any()
+
+        if is_nan:
+            print("The dataframe contains NaN values.")
+        else:
+            print("The dataframe does not contain any NaN values.")
 
         # Write the JSON data to the output file
         test_df.to_json(output_file_path, orient="records")
@@ -1564,9 +1749,9 @@ if args.method!='lime':
 
 
 
-# 	"========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
+#   "========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
 
-else:
+else :
     hateXplain_df = pd.read_json(args.data_path+'dataset.json')
     hateXplain_df = hateXplain_df.T
     thresholds = [0.50, 0.55, 0.60, 0.65]
@@ -1651,6 +1836,10 @@ else:
 
 
     all_labels, all_output_proba, all_lime_scores, all_post_tokens_cleaned =  run_lime(test_df)
+
+    if any(item is np.nan for item in all_output_proba):
+        print("There is a NaN value in the classification_scores.")
+    
     test_df['post_tokens_cleaned'] = all_post_tokens_cleaned
     test_df['classification'] = all_labels
     test_df['classification_scores'] = all_output_proba
@@ -1793,24 +1982,51 @@ else:
         for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
             text = test_df.iloc[i]['text_after_removing_relevant_tokens']
 
-            label_proba,_, _ = model.predict(text)
+            if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+                label_proba,_, _ = model.predict2(text)
+            else:
+                label_proba,_, _ = model.predict(text)
+
 
 
             non_toxic_proba = float(label_proba[0] )
             toxic_proba = float(label_proba[1])
+
+
 
             label = 'non-toxic'
             if toxic_proba>non_toxic_proba:
                 label = 'toxic'
 
 
+            if (non_toxic_proba is np.nan) or (toxic_proba is np.nan):
+                print(text)
+                print('annotatorid: ', test_df.iloc[i]['annotation_id'])
+                print('--------------------------------------------------')
+
+            # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+            #     print('text: ', text)
+            #     print()
+            #     print(label_proba)
+            #     print()
+            #     print()
+            #     # input()
+            #     label = 'toxic'
+            #     toxic_proba = 0.55
+            #     non_toxic_proba = 0.45
+
+
             comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
 
         return comprehensiveness_classification_scores
 
-    test_df['comprehensiveness_classification_scores'] = run_model_after_removing_top_relevant_tokens(test_df)
-    test_df.head()
+    comprehensiveness_classification_scores = run_model_after_removing_top_relevant_tokens(test_df)
 
+    # input()
+    
+
+    # print('comprehensiveness_classification_scores: ',comprehensiveness_classification_scores)
+    test_df['comprehensiveness_classification_scores'] = comprehensiveness_classification_scores
 
     #suffiency score
 
@@ -1831,7 +2047,7 @@ else:
             if toxic_proba>non_toxic_proba:
                 label = 'toxic'
 
-            if non_toxic_proba==None or toxic_proba ==None:
+            if non_toxic_proba is np.nan or toxic_proba is np.nan:
                 print(text)
                 print(i)
             sufficiency_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
@@ -1867,7 +2083,7 @@ else:
         os.makedirs(dir_path)
 
     # Set the path of the output file
-    output_file_path = os.path.join(dir_path, model_name + '-LIME-' + 'faithfullness_filtering-' + args.faithfullness_filtering + '.json')
+    output_file_path = os.path.join(dir_path, model_name + '-dataSplit'+str(args.split)+  '-LIME-' + 'faithfullness_filtering-' + args.faithfullness_filtering + '.json')
 
     # Print the output file path to check if it's what you expect
     print("Output file path:", output_file_path)
@@ -2485,12 +2701,28 @@ def convert_to_eraser_format(dataset, method, save_split, save_path, id_division
 
 import json
 
-post_id_divisions_path = args.data_path+'post_id_divisions.json'
+
 if args.split==1:
     post_id_divisions_path = args.data_path+'post_id_division_split1_seed_1234.json'
+    print('using post_id_divisions: ', post_id_divisions_path)
 
-if args.split==2:
+elif args.split==2:
     post_id_divisions_path = args.data_path+'post_id_division_split2_seed_12345.json'
+    print('using post_id_divisions: ', post_id_divisions_path)
+
+
+elif args.split==3:
+    post_id_divisions_path = args.data_path+'post_id_divisions.json'
+    print('using post_id_divisions: ', post_id_divisions_path)
+
+elif args.split==4:
+    post_id_divisions_path = args.data_path+'post_id_division_split4_seed_123456.json'
+    print('using post_id_divisions: ', post_id_divisions_path)
+
+
+
+
+
 
 
 
