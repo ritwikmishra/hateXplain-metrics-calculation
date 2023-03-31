@@ -254,6 +254,21 @@ import stanza
 import pandas as pd
 from transformers import AutoTokenizer
 
+
+def tokenize_my_sent(text):
+    if not isinstance(text, str):
+        raise TypeError("Input text must be a string.")
+
+    tokenized_text_i = []
+    doc = nlp(text)
+    for sents in doc.sentences:
+        for word in sents.words:
+
+            if len(tokenizer.tokenize(word.text)) > 0:
+                tokenized_text_i.append(word.text)
+    return ' '.join(tokenized_text_i)
+
+
 nlp = stanza.Pipeline('en',processors='tokenize', download_method=2)  # put desired language here
 add_cls_sep_token_ids = False
 if args.add_cls_sep_tokens=='True':
@@ -263,12 +278,13 @@ if args.add_cls_sep_tokens=='True':
 def filter_for_max_len(sent_list, label_list):
 	sents2, labels2 = [], []
 	for s, l in tqdm(zip(sent_list, label_list), total=len(sent_list), ncols=150, desc='filtering'):
-		tokenized_text_i = []
-		doc = nlp(s)
-		for sents in doc.sentences:
-			for word in sents.words:
-				tokenized_text_i.append(word.text)
-		s = ' '.join(tokenized_text_i)
+		# tokenized_text_i = []
+		# doc = nlp(s)
+		# for sents in doc.sentences:
+		# 	for word in sents.words:
+		# 		tokenized_text_i.append(word.text)
+
+		s =  tokenize_my_sent(s) #' '.join(tokenized_text_i)
 		if len(tokenizer(s,return_tensors="pt")['input_ids'][0]) <= dataset_parameter['max_seq_len']:
 			sents2.append(s)
 			labels2.append(l)
@@ -747,6 +763,8 @@ class MODEL(nn.Module):
 
     def predict(self, text):
         # processed_text = preprocess_text(text)
+
+        text = tokenize_my_sent(text)
   
 
 
