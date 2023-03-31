@@ -199,3 +199,28 @@ Sufficiency :-7.147447362122725e-05
 ======= hatexplain metrics on: trained_models/runID-2-checkpoint.pth==========
 ajeet-calculate-metrics.py --method 2 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-2-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
 Begin Fri Mar 24 15:42:31 2023
+End Fri Mar 24 15:58:46 2023
+
+Plausibility
+IOU F1 :0.13933470411656165
+Token F1 :0.2235828920604309
+AUPRC :0.5029663445422343
+
+Faithfulness
+Comprehensiveness :-0.0023683824354838695
+Sufficiency :-0.005759245198178981
+0.13933470411656165	0.2235828920604309	0.5029663445422343	-0.0023683824354838695	-0.005759245198178981
+======= hatexplain metrics on: trained_models/runID-2-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-2-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
+Begin Fri Mar 24 15:58:51 2023
+End Fri Mar 24 16:04:41 2023
+
+Plausibility
+IOU F1 :0.24604646029916585
+Token F1 :0.28487463375085176
+AUPRC :0.6363544323116933
+
+Faithfulness
+Comprehensiveness :-0.002241310387200834
+Sufficiency :-0.017088447274141518
+0.24604646029916585	0.28487463375085176	0.6363544323116933	-0.002241310387200834	-0.017088447274141518

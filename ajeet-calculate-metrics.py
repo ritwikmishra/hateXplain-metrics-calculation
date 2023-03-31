@@ -240,6 +240,7 @@ bert = AutoModel.from_pretrained(bert_model_parameter['hugging_face_name'])
 
 bert_model_parameter['tokenizer_cls_id'], _, bert_model_parameter['tokenizer_sep_id'], bert_model_parameter['tokenizer_pad_id'] = tokenizer("i", return_tensors="pt", max_length=4, padding='max_length')['input_ids'][0].tolist()
 
+
 def tokenizer_word_length(text):
     """
         This function will calculate length of input ids from tokenizer
@@ -1626,7 +1627,14 @@ if args.method!='lime':
                 # else:
                 #     label_proba,_, _ = model.predict(text)
 
-                label_proba,_, _ = model.predict(text)
+                try:
+                    if len(text) == 0:
+                        text = tokenizer.convert_ids_to_tokens([bert_model_parameter['tokenizer_pad_id']])[0]
+                    label_proba,_, _ = model.predict(text)
+                except Exception as e:
+                    print(e)
+                    print(text)
+                    input('error wait')
                 has_nan = np.isnan(label_proba).any()
                 if has_nan:
                     print('line 1561: label_proba has NaN values')

@@ -147,3 +147,60 @@ Testing Accuracy : 0.716
 weighted avg       0.74      0.72      0.69      1922
 
 
+======= hatexplain metrics on: trained_models/runID-9-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-9-checkpoint.pth --data_path data/ --encoder_name bert-base-multilingual-cased --encoder_frozen False 
+Begin Fri Mar 24 17:04:24 2023
+End Fri Mar 24 17:20:50 2023
+
+Plausibility
+IOU F1 :0.10721262767755943
+Token F1 :0.1892594877461209
+AUPRC :0.4689718368046138
+
+Faithfulness
+Comprehensiveness :0.1445988284180541
+Sufficiency :0.2609748905237253
+0.10721262767755943	0.1892594877461209	0.4689718368046138	0.1445988284180541	0.2609748905237253
+
+======= hatexplain metrics on: trained_models/runID-9-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 1 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-9-checkpoint.pth --data_path data/ --encoder_name bert-base-multilingual-cased --encoder_frozen False 
+Begin Fri Mar 24 17:36:44 2023
+End Fri Mar 24 17:59:03 2023
+
+Plausibility
+IOU F1 :0.10525087632993455
+Token F1 :0.19212409039642223
+AUPRC :0.4657576205845931
+
+Faithfulness
+Comprehensiveness :0.14199908923959417
+Sufficiency :0.26855482914531736
+0.10525087632993455	0.19212409039642223	0.4657576205845931	0.14199908923959417	0.26855482914531736
+======= hatexplain metrics on: trained_models/runID-9-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 2 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-9-checkpoint.pth --data_path data/ --encoder_name bert-base-multilingual-cased --encoder_frozen False 
+Begin Fri Mar 24 17:59:08 2023
+End Fri Mar 24 18:15:43 2023
+
+Plausibility
+IOU F1 :0.11260653259162898
+Token F1 :0.18787696224129544
+AUPRC :0.46897000040358766
+
+Faithfulness
+Comprehensiveness :0.14413250957304888
+Sufficiency :0.2626337498567638
+0.11260653259162898	0.18787696224129544	0.46897000040358766	0.14413250957304888	0.2626337498567638
+======= hatexplain metrics on: trained_models/runID-9-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-9-checkpoint.pth --data_path data/ --encoder_name bert-base-multilingual-cased --encoder_frozen False 
+Begin Fri Mar 24 18:15:47 2023
+End Sat Mar xxxx 2023
+
+Plausibility
+IOU F1 :0.26048860442896526
+Token F1 :0.28512939368446655
+AUPRC :0.6450316406042184
+
+Faithfulness
+Comprehensiveness :0.14811900906716963
+Sufficiency :-0.06881233506951093
+0.26048860442896526	0.28512939368446655	0.6450316406042184	0.14811900906716963	-0.06881233506951093
