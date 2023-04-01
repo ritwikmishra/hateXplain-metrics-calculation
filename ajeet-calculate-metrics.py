@@ -279,18 +279,18 @@ add_cls_sep_token_ids = False
 if args.add_cls_sep_tokens=='True':
     add_cls_sep_token_ids = True
 
-def tokenize_my_sent(text):
-    if not isinstance(text, str):
-        raise TypeError("Input text must be a string.")
+# def tokenize_my_sent(text):
+#     if not isinstance(text, str):
+#         raise TypeError("Input text must be a string.")
 
-    tokenized_text_i = []
-    doc = nlp(text)
-    for sents in doc.sentences:
-        for word in sents.words:
+#     tokenized_text_i = []
+#     doc = nlp(text)
+#     for sents in doc.sentences:
+#         for word in sents.words:
 
-            if len(tokenizer.tokenize(word.text)) > 0:
-                tokenized_text_i.append(word.text)
-    return ' '.join(tokenized_text_i)
+#             if len(tokenizer.tokenize(word.text)) > 0:
+#                 tokenized_text_i.append(word.text)
+#     return ' '.join(tokenized_text_i)
 
 
 # def filter_for_max_len(sent_list, label_list):
@@ -1861,12 +1861,6 @@ else :
             text_tokens = text.split()
             text_tokens = [tk for tk in text_tokens if tk!='']
 
-            # if test_df.iloc[i]['annotation_id']=='1170440965888335874_twitter':
-            #     print("text.split(' '):", text.split(' '))
-            #     print("len(text.split(' '):", len(text.split(' ')))
-            #     print()
-            #     print("temp_text.split(' '):", temp_text.split(' '))
-            #     print("len(temp_text.split(' '):", len(temp_text.split(' ')))
 
             for token in text_tokens:
                 # print('token: ', token)
@@ -1877,6 +1871,13 @@ else :
                 else:
                     omitted_tokens.append((i, token))
                     lime_score_list.append(0) #add 0 relevance to omitted-token
+
+            if test_df.iloc[i]['annotation_id']=='1170440965888335874_twitter':
+                print("text.split():", text.split())
+                print("len(text.split():", len(text.split()))
+                print("lime_score_list: ", lime_score_list)
+                input('sfdlnkasdkl;sdlkdfslsdlkdsfldsl')
+
 
             # else:
             #     for token in text_tokens:
