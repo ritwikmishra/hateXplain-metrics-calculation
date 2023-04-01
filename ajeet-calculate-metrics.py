@@ -15,6 +15,7 @@ Original file is located at
 """# Header file"""
 
 import os 
+
 import math
 
 import string
@@ -240,7 +241,6 @@ bert = AutoModel.from_pretrained(bert_model_parameter['hugging_face_name'])
 
 bert_model_parameter['tokenizer_cls_id'], _, bert_model_parameter['tokenizer_sep_id'], bert_model_parameter['tokenizer_pad_id'] = tokenizer("i", return_tensors="pt", max_length=4, padding='max_length')['input_ids'][0].tolist()
 
-
 def tokenizer_word_length(text):
     """
         This function will calculate length of input ids from tokenizer
@@ -293,15 +293,30 @@ def tokenize_my_sent(text):
     return ' '.join(tokenized_text_i)
 
 
+# def filter_for_max_len(sent_list, label_list):
+#     sents2, labels2 = [], []
+#     for s, l in tqdm(zip(sent_list, label_list), total=len(sent_list), ncols=150, desc='filtering'):
+#         # tokenized_text_i = []
+#         # doc = nlp(s)
+#         # for sents in doc.sentences:
+#         #     for word in sents.words:
+#         #         tokenized_text_i.append(word.text)
+#         s =  tokenize_my_sent(s)#' '.join(tokenized_text_i)
+#         if len(tokenizer(s,return_tensors="pt")['input_ids'][0]) <= dataset_parameter['max_seq_len']:
+#             sents2.append(s)
+#             labels2.append(l)
+#     return sents2, labels2
+
+
 def filter_for_max_len(sent_list, label_list):
     sents2, labels2 = [], []
     for s, l in tqdm(zip(sent_list, label_list), total=len(sent_list), ncols=150, desc='filtering'):
-        # tokenized_text_i = []
-        # doc = nlp(s)
-        # for sents in doc.sentences:
-        #     for word in sents.words:
-        #         tokenized_text_i.append(word.text)
-        s =  tokenize_my_sent(s)#' '.join(tokenized_text_i)
+        tokenized_text_i = []
+        doc = nlp(s)
+        for sents in doc.sentences:
+            for word in sents.words:
+                tokenized_text_i.append(word.text)
+        s = ' '.join(tokenized_text_i)
         if len(tokenizer(s,return_tensors="pt")['input_ids'][0]) <= dataset_parameter['max_seq_len']:
             sents2.append(s)
             labels2.append(l)
@@ -776,10 +791,9 @@ class MODEL(nn.Module):
         # processed_text = preprocess_text(text)
   
 
-        text  = tokenize_my_sent(text)
+        # text  = tokenize_my_sent(text)
         # input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik([processed_text])
         input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik2([text])
-
 
 
         input_ids, attention_mask, word_break, word_break_len = torch.tensor(input_ids), torch.tensor(attention_mask),  torch.tensor(word_break), torch.tensor(word_break_len)
@@ -1340,12 +1354,19 @@ if args.method!='lime':
         print()
         with open(test_file) as f:
           test_data = [json.loads(line) for line in f]
+
         test_docid =[]
         test_texts =[]
+        to_remove_unicodes = {'\x92', '\u200b', '\u200d', '\u200f', '\u202a', '\u202c', '\ufeff'}
+
 
         for i in tqdm(range(len(test_data)), desc='getting docids and corresponding text...'):
-          test_docid.append(test_data[i]['annotation_id'])
-          test_texts.append(" ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0]))
+            test_docid.append(test_data[i]['annotation_id'])
+            sent = " ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0])
+            for code in to_remove_unicodes:
+                sent = sent.replace(code, ' u200')
+
+            test_texts.append(sent)
 
 
         test_df = pd.DataFrame(test_docid, columns=['annotation_id'])
@@ -1396,8 +1417,8 @@ if args.method!='lime':
                 if toxic_proba>non_toxic_proba:
                   label = 'toxic'
 
-                tokenized_sent = tokenize_my_sent(sentence_text)
-                n = len(tokenized_sent.split(' '))
+                # tokenized_sent = tokenize_my_sent(sentence_text)
+                n = len(sentence_text.split())
 
                 if add_cls_sep_token_ids==True:
                     word_relevances = word_relevances[0: n+2]
@@ -1546,6 +1567,7 @@ if args.method!='lime':
             isTopk = args.faithfullness_filtering=='top-k'
 
 
+
             if isTopk:
                 index = list(range(len(soft_rationale_predictions)))
                 s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
@@ -1595,9 +1617,11 @@ if args.method!='lime':
 
         texts_after_removing = []
         for i in range(test_df.shape[0]):
-            temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
-            token_list = temp_text.split(' ')
-            
+            # temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
+            # token_list = temp_text.split()
+            text = test_df.iloc[i]['commentText']
+            token_list = text.split()
+
             # token_list = test_df.iloc[i]['commentText'].split(' ')
             to_remove_indices = test_df.iloc[i]['to_remove_indices']
             texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
@@ -1605,8 +1629,10 @@ if args.method!='lime':
         text_of_top_relevant_tokens = []
         for i in range(test_df.shape[0]):
 
-            temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
-            token_list = temp_text.split(' ')
+            # temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
+            # token_list = temp_text.split()
+            text = test_df.iloc[i]['commentText']
+            token_list = text.split()
 
 
             to_remove_indices = test_df.iloc[i]['to_remove_indices']
@@ -1622,19 +1648,33 @@ if args.method!='lime':
             for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
                 text = test_df.iloc[i]['text_after_removing_relevant_tokens']
 
+                # temp_text = tokenize_my_sent(text)
+                text_len = len(text.split())
+
+
+                # print('text_len: ', text_len)
+                # print('temp_text: ', temp_text)
+
+                if len(text)==0:
+                    text = tokenizer.convert_ids_to_tokens([bert_model_parameter['tokenizer_pad_id']])[0]
+                    # print('text: ', text)
+                    # input('ADDED PAD TOKEN')
+
                 # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
                 #     label_proba,_, _ = model.predict2(text, '1179098097160470529_twitter')
                 # else:
                 #     label_proba,_, _ = model.predict(text)
 
+
                 try:
-                    if len(text) == 0:
-                        text = tokenizer.convert_ids_to_tokens([bert_model_parameter['tokenizer_pad_id']])[0]
                     label_proba,_, _ = model.predict(text)
                 except Exception as e:
-                    print(e)
-                    print(text)
-                    input('error wait')
+                    print('original text:  ', test_df.iloc[i]['commentText'])
+                    print('len(text): ', len(text))
+                    print('text: ', text)
+                    print('e:', e)
+                    # input('ERROR AA GAYA')
+
                 has_nan = np.isnan(label_proba).any()
                 if has_nan:
                     print('line 1561: label_proba has NaN values')
@@ -1671,6 +1711,7 @@ if args.method!='lime':
                 comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
             return comprehensiveness_classification_scores
 
+        # print(list(test_df['commentText'])[0:20])
         comprehensiveness_classification_scores = run_model_after_removing_top_relevant_tokens(test_df)
 
         if any(item is np.nan for item in comprehensiveness_classification_scores):
@@ -1781,9 +1822,16 @@ else :
     test_docid =[]
     test_texts =[]
 
-    for i in tqdm(range(len(test_data)), desc = 'getting texts and docids...'):
+    to_remove_unicodes = {'\x92', '\u200b', '\u200d', '\u200f', '\u202a', '\u202c', '\ufeff'}
+
+
+    for i in tqdm(range(len(test_data)), desc='getting docids and corresponding text...'):
         test_docid.append(test_data[i]['annotation_id'])
-        test_texts.append(" ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0]))
+        sent = " ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0])
+        for code in to_remove_unicodes:
+            sent = sent.replace(code, ' u200')
+
+        test_texts.append(sent)
 
 
     test_df = pd.DataFrame(test_docid, columns=['annotation_id'])
@@ -1809,18 +1857,37 @@ else :
                 lime_score_dict[ele[0]] = ele[1]
 
             lime_score_list = []
-            temp_text = tokenize_my_sent(text)
-            text_tokens = temp_text.split(' ')
+            # temp_text = tokenize_my_sent(text)
+            text_tokens = text.split()
             text_tokens = [tk for tk in text_tokens if tk!='']
 
+            # if test_df.iloc[i]['annotation_id']=='1170440965888335874_twitter':
+            #     print("text.split(' '):", text.split(' '))
+            #     print("len(text.split(' '):", len(text.split(' ')))
+            #     print()
+            #     print("temp_text.split(' '):", temp_text.split(' '))
+            #     print("len(temp_text.split(' '):", len(temp_text.split(' ')))
+
             for token in text_tokens:
+                # print('token: ', token)
+                # print('len(token): ', len(token))
+
                 if token in lime_score_dict:
                     lime_score_list.append(lime_score_dict[token])
                 else:
                     omitted_tokens.append((i, token))
                     lime_score_list.append(0) #add 0 relevance to omitted-token
 
+            # else:
+            #     for token in text_tokens:
+            #         if token in lime_score_dict:
+            #             lime_score_list.append(lime_score_dict[token])
+            #         else:
+            #             omitted_tokens.append((i, token))
+            #             lime_score_list.append(0) #add 0 relevance to omitted-token
 
+
+ 
             min_lime_score = min(lime_score_list)
             lime_score_list = [score-min_lime_score for score in lime_score_list]
             max_lime_score = max(lime_score_list)
@@ -1974,15 +2041,16 @@ else :
 
     texts_after_removing = []
     for i in range(test_df.shape[0]):
-        temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
-        token_list = temp_text.split(' ')
+        text = test_df.iloc[i]['commentText']
+        token_list = text.split()
         to_remove_indices = test_df.iloc[i]['to_remove_indices']
         texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
 
     text_of_top_relevant_tokens = []
     for i in range(test_df.shape[0]):
-        temp_text = tokenize_my_sent(test_df.iloc[i]['commentText'])
-        token_list = temp_text.split(' ')
+        text = test_df.iloc[i]['commentText']
+        token_list = text.split()
+
 
         to_remove_indices = test_df.iloc[i]['to_remove_indices']
         text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
@@ -2001,12 +2069,36 @@ else :
         for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
             text = test_df.iloc[i]['text_after_removing_relevant_tokens']
 
-            if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
-                label_proba,_, _ = model.predict2(text)
-            else:
+            # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+            #     label_proba,_, _ = model.predict2(text)
+            # else:
+            #     label_proba,_, _ = model.predict(text)
+
+            # temp_text = tokenize_my_sent(text)
+            text_len = len(text.split())
+
+            # print('text_len: ', text_len)
+            # print('temp_text: ', temp_text)
+
+            if len(text)==0:
+                text = tokenizer.convert_ids_to_tokens([bert_model_parameter['tokenizer_pad_id']])[0]
+                # print('text: ', text)
+                # input('ADDED PAD TOKEN')
+
+            # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+            #     label_proba,_, _ = model.predict2(text, '1179098097160470529_twitter')
+            # else:
+            #     label_proba,_, _ = model.predict(text)
+
+
+            try:
                 label_proba,_, _ = model.predict(text)
-
-
+            except Exception as e:
+                print('original text:  ', test_df.iloc[i]['commentText'])
+                print('len(text): ', len(text))
+                print('text: ', text)
+                print('e:', e)
+                # input('ERROR AA GAYA')
 
             non_toxic_proba = float(label_proba[0] )
             toxic_proba = float(label_proba[1])
@@ -2023,7 +2115,7 @@ else :
                 print('annotatorid: ', test_df.iloc[i]['annotation_id'])
                 print('--------------------------------------------------')
 
-            # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+            # if test_df.iloc[i]['annotation_id']=='1179053578285133824_twitter': # 1179098097160470529_twitter
             #     print('text: ', text)
             #     print()
             #     print(label_proba)
