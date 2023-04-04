@@ -1872,21 +1872,6 @@ else :
                     omitted_tokens.append((i, token))
                     lime_score_list.append(0) #add 0 relevance to omitted-token
 
-            # if test_df.iloc[i]['annotation_id']=='1170440965888335874_twitter':
-            #     print("text.split():", text.split())
-            #     print("len(text.split():", len(text.split()))
-            #     print("lime_score_list: ", lime_score_list)
-            #     input('sfdlnkasdkl;sdlkdfslsdlkdsfldsl')
-
-
-            # else:
-            #     for token in text_tokens:
-            #         if token in lime_score_dict:
-            #             lime_score_list.append(lime_score_dict[token])
-            #         else:
-            #             omitted_tokens.append((i, token))
-            #             lime_score_list.append(0) #add 0 relevance to omitted-token
-
 
  
             min_lime_score = min(lime_score_list)
