@@ -233,3 +233,15 @@ Faithfulness
 Comprehensiveness :0.04870125213513513
 Sufficiency :-0.03666220472234927
 0.1727860817400219	0.2578030263552707	0.5523558268451048	0.04870125213513513	-0.03666220472234927
+Tue Apr  4 13:17:12 2023
+Keep-4 Testing Accuracy : 0.599
+              precision    recall  f1-score   support
+
+           0       0.68      0.02      0.04       782
+           1       0.60      0.99      0.75      1142
+
+    accuracy                           0.60      1924
+   macro avg       0.64      0.51      0.39      1924
+weighted avg       0.63      0.60      0.46      1924
+
+
