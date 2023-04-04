@@ -177,3 +177,59 @@ Testing Accuracy : 0.752
 weighted avg       0.75      0.75      0.74      1922
 
 
+======= hatexplain metrics on: trained_models/runID-23-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-23-checkpoint.pth --data_path data/ --encoder_name xlm-roberta-base --encoder_frozen False 
+Begin Mon Apr  3 02:30:16 2023
+End Mon Apr  3 02:54:12 2023
+
+Plausibility
+IOU F1 :0.1232298696937879
+Token F1 :0.2136126051920547
+AUPRC :0.4808277441213261
+
+Faithfulness
+Comprehensiveness :0.12291342818652447
+Sufficiency :0.22436898456004162
+0.1232298696937879	0.2136126051920547	0.4808277441213261	0.12291342818652447	0.22436898456004162
+======= hatexplain metrics on: trained_models/runID-23-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 1 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-23-checkpoint.pth --data_path data/ --encoder_name xlm-roberta-base --encoder_frozen False 
+Begin Mon Apr  3 02:54:17 2023
+End Mon Apr  3 03:23:08 2023
+
+Plausibility
+IOU F1 :0.12408241891231261
+Token F1 :0.21163336480726558
+AUPRC :0.4770391790659372
+
+Faithfulness
+Comprehensiveness :0.12804569803204996
+Sufficiency :0.2214370081647763
+0.12408241891231261	0.21163336480726558	0.4770391790659372	0.12804569803204996	0.2214370081647763
+======= hatexplain metrics on: trained_models/runID-23-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 2 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-23-checkpoint.pth --data_path data/ --encoder_name xlm-roberta-base --encoder_frozen False 
+Begin Mon Apr  3 03:23:13 2023
+End Mon Apr  3 03:47:27 2023
+
+Plausibility
+IOU F1 :0.12308618462816608
+Token F1 :0.21254163167153584
+AUPRC :0.48184611140551986
+
+Faithfulness
+Comprehensiveness :0.12641573601103018
+Sufficiency :0.22497707549542142
+0.12308618462816608	0.21254163167153584	0.48184611140551986	0.12641573601103018	0.22497707549542142
+======= hatexplain metrics on: trained_models/runID-23-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-23-checkpoint.pth --data_path data/ --encoder_name xlm-roberta-base --encoder_frozen False 
+Begin Mon Apr  3 03:47:32 2023
+End Mon Apr  3 04:27:13 2023
+
+Plausibility
+IOU F1 :0.2637179062937275
+Token F1 :0.2973086724061281
+AUPRC :0.6411950353744007
+
+Faithfulness
+Comprehensiveness :0.0072690886617065575
+Sufficiency :-0.049746610430176905
+0.2637179062937275	0.2973086724061281	0.6411950353744007	0.0072690886617065575	-0.049746610430176905

@@ -132,40 +132,59 @@ Testing Accuracy : 0.708
 weighted avg       0.72      0.71      0.68      1920
 
 
+======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
+Begin Sun Apr  2 11:09:46 2023
+End Sun Apr  2 11:31:41 2023
 
+Plausibility
+IOU F1 :0.10621107436206056
+Token F1 :0.18519941992385602
+AUPRC :0.4723674461591103
+
+Faithfulness
+Comprehensiveness :0.11773211146409991
+Sufficiency :0.2301272127405307
+0.10621107436206056	0.18519941992385602	0.4723674461591103	0.11773211146409991	0.2301272127405307
 ======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 24 17:49:50 2023
+ajeet-calculate-metrics.py --method 1 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
+Begin Sun Apr  2 11:31:46 2023
+End Sun Apr  2 11:57:51 2023
+
+Plausibility
+IOU F1 :0.10747071587112464
+Token F1 :0.18172321795432458
+AUPRC :0.4692968118668835
+
+Faithfulness
+Comprehensiveness :0.11160186799255983
+Sufficiency :0.23669216763168577
+0.10747071587112464	0.18172321795432458	0.4692968118668835	0.11160186799255983	0.23669216763168577
 ======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 24 17:50:41 2023
+ajeet-calculate-metrics.py --method 2 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
+Begin Sun Apr  2 11:57:58 2023
+End Sun Apr  2 12:19:07 2023
+
+Plausibility
+IOU F1 :0.11289325641088935
+Token F1 :0.17741696383127809
+AUPRC :0.4682888731295722
+
+Faithfulness
+Comprehensiveness :0.11785041969791883
+Sufficiency :0.22869679103725288
+0.11289325641088935	0.17741696383127809	0.4682888731295722	0.11785041969791883	0.22869679103725288
 ======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 24 17:52:11 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 24 17:55:39 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 24 18:06:48 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 31 14:53:48 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 31 17:18:12 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Fri Mar 31 19:27:45 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Sat Apr  1 00:17:33 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Sat Apr  1 00:43:43 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Sat Apr  1 00:44:21 2023
-======= hatexplain metrics on: trained_models/runID-5-checkpoint.pth==========
-ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
-Begin Sat Apr  1 00:45:40 2023
+ajeet-calculate-metrics.py --method lime --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-5-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
+Begin Sun Apr  2 12:19:12 2023
+End Sun Apr  2 20:43:22 2023
+
+Plausibility
+IOU F1 :0.24406597108786351
+Token F1 :0.2909880601489675
+AUPRC :0.6325703487312225
+
+Faithfulness
+Comprehensiveness :-0.03871679947533819
+Sufficiency :-0.04634400822029136
+0.24406597108786351	0.2909880601489675	0.6325703487312225	-0.03871679947533819	-0.04634400822029136

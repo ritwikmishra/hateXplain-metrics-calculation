@@ -167,3 +167,59 @@ Testing Accuracy : 0.674
 weighted avg       0.67      0.67      0.65      1924
 
 
+======= hatexplain metrics on: trained_models/runID-8-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 0 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-8-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen True 
+Begin Sun Apr  2 12:24:26 2023
+End Sun Apr  2 12:41:36 2023
+
+Plausibility
+IOU F1 :0.13630919120057516
+Token F1 :0.23334248510151087
+AUPRC :0.48436788956613464
+
+Faithfulness
+Comprehensiveness :0.07252470136013513
+Sufficiency :0.09540219951954262
+0.13630919120057516	0.23334248510151087	0.48436788956613464	0.07252470136013513	0.09540219951954262
+======= hatexplain metrics on: trained_models/runID-8-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 1 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-8-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen True 
+Begin Sun Apr  2 12:41:41 2023
+End Sun Apr  2 13:02:59 2023
+
+Plausibility
+IOU F1 :0.13268912261616586
+Token F1 :0.22953058138229854
+AUPRC :0.486466732348434
+
+Faithfulness
+Comprehensiveness :0.07199955766470895
+Sufficiency :0.09655017332832641
+0.13268912261616586	0.22953058138229854	0.486466732348434	0.07199955766470895	0.09655017332832641
+======= hatexplain metrics on: trained_models/runID-8-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 2 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-8-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen True 
+Begin Sun Apr  2 13:03:04 2023
+End Sun Apr  2 13:20:15 2023
+
+Plausibility
+IOU F1 :0.12439750672591164
+Token F1 :0.22854476058232992
+AUPRC :0.4867269969465017
+
+Faithfulness
+Comprehensiveness :0.07753715871798339
+Sufficiency :0.09305248530369022
+0.12439750672591164	0.22854476058232992	0.4867269969465017	0.07753715871798339	0.09305248530369022
+======= hatexplain metrics on: trained_models/runID-8-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-8-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen True 
+Begin Sun Apr  2 13:20:20 2023
+End Sun Apr  2 13:25:57 2023
+
+Plausibility
+IOU F1 :0.17332652176261684
+Token F1 :0.2527442151973231
+AUPRC :0.5453166131869606
+
+Faithfulness
+Comprehensiveness :-0.00027479672234927155
+Sufficiency :-0.0635185679141892
+0.17332652176261684	0.2527442151973231	0.5453166131869606	-0.00027479672234927155	-0.0635185679141892
