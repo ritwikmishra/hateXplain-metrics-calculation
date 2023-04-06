@@ -80,6 +80,8 @@ parser.add_argument('--encoder_name', type=str, help='name of encoder, bert-base
 parser.add_argument('--drop_out', type=float, default=0.4)
 parser.add_argument('--encoder_frozen', type=str, help='encoder layers frozen or not', default='False')
 parser.add_argument('--add_cls_sep_tokens', type=str, help='add_cls_sep_tokens or not, True/False', default=False)
+parser.add_argument('--lime_num_samples', type=int, default=100)
+
 
 args = parser.parse_args()
 
@@ -1851,7 +1853,7 @@ else :
             # text = preprocess_text(text)
 
 
-            explanation = explainer.explain_instance(text, lime_predict_proba, num_features=50, num_samples=100)
+            explanation = explainer.explain_instance(text, lime_predict_proba, num_features=50, num_samples=args.lime_num_samples)
             lime_score_dict = {}
             for ele in explanation.as_list():
                 lime_score_dict[ele[0]] = ele[1]
