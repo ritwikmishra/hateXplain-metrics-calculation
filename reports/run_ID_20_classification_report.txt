@@ -245,3 +245,59 @@ Keep-4 Testing Accuracy : 0.599
 weighted avg       0.76      0.60      0.45      1924
 
 
+======= hatexplain metrics on: trained_models/runID-20-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --lime_num_samples 500 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-20-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen True 
+Begin Fri Apr  7 01:40:39 2023
+End Fri Apr  7 01:58:35 2023
+
+Plausibility
+IOU F1 :0.14543388142473218
+Token F1 :0.20530350929548574
+AUPRC :0.5072205202010469
+
+Faithfulness
+Comprehensiveness :0.0062477922795218304
+Sufficiency :-0.04229443478601871
+0.14543388142473218	0.20530350929548574	0.5072205202010469	0.0062477922795218304	-0.04229443478601871
+======= hatexplain metrics on: trained_models/runID-20-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --lime_num_samples 50 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-20-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen True 
+Begin Fri Apr  7 01:44:54 2023
+End Fri Apr  7 01:49:19 2023
+
+Plausibility
+IOU F1 :0.11332204033881972
+Token F1 :0.21875032962934252
+AUPRC :0.48486014417976947
+
+Faithfulness
+Comprehensiveness :-0.008246928318659042
+Sufficiency :-0.03589452129386694
+0.11332204033881972	0.21875032962934252	0.48486014417976947	-0.008246928318659042	-0.03589452129386694
+======= hatexplain metrics on: trained_models/runID-20-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --lime_num_samples 10 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-20-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen True 
+Begin Fri Apr  7 02:15:58 2023
+End Fri Apr  7 02:19:12 2023
+
+Plausibility
+IOU F1 :0.10661931441110374
+Token F1 :0.22218002125770092
+AUPRC :0.4742933406879569
+
+Faithfulness
+Comprehensiveness :-0.013832070062110187
+Sufficiency :-0.033617628820374224
+0.10661931441110374	0.22218002125770092	0.4742933406879569	-0.013832070062110187	-0.033617628820374224
+======= hatexplain metrics on: trained_models/runID-20-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --lime_num_samples 1000 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-20-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen True 
+Begin Fri Apr  7 05:33:16 2023
+End Fri Apr  7 06:06:32 2023
+
+Plausibility
+IOU F1 :0.15178679907429876
+Token F1 :0.20209955620465525
+AUPRC :0.5102430668581039
+
+Faithfulness
+Comprehensiveness :0.010679321528846156
+Sufficiency :-0.043702148583471934
+0.15178679907429876	0.20209955620465525	0.5102430668581039	0.010679321528846156	-0.043702148583471934
