@@ -235,3 +235,105 @@ Keep-4 Testing Accuracy : 0.606
 weighted avg       0.71      0.61      0.48      1919
 
 
+======= hatexplain metrics on: trained_models/runID-4-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --lime_num_features 10 --lime_num_samples 1500 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-4-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen True 
+Begin Sat Apr  8 00:09:37 2023
+End Sat Apr  8 01:02:44 2023
+
+Plausibility
+IOU F1 :0.1841126529015193
+Token F1 :0.24125847130363062
+AUPRC :0.5675925858071149
+
+Faithfulness
+Comprehensiveness :0.01180214370306972
+Sufficiency :-0.06968936013309053
+0.1841126529015193	0.24125847130363062	0.5675925858071149	0.01180214370306972	-0.06968936013309053
+Tue Apr 11 14:15:25 2023
+Testing Accuracy : 0.601
+              precision    recall  f1-score   support
+
+           0       0.87      0.03      0.06       789
+           1       0.60      1.00      0.75      1133
+
+    accuracy                           0.60      1922
+   macro avg       0.73      0.51      0.40      1922
+weighted avg       0.71      0.60      0.47      1922
+
+
+Tue Apr 11 15:00:17 2023
+Testing Accuracy : 0.605
+              precision    recall  f1-score   support
+
+           0       0.78      0.05      0.10       789
+           1       0.60      0.99      0.75      1133
+
+    accuracy                           0.61      1922
+   macro avg       0.69      0.52      0.42      1922
+weighted avg       0.67      0.61      0.48      1922
+
+
+Tue Apr 11 15:43:07 2023
+Testing Accuracy : 0.616
+              precision    recall  f1-score   support
+
+           0       0.75      0.10      0.18       789
+           1       0.61      0.98      0.75      1133
+
+    accuracy                           0.62      1922
+   macro avg       0.68      0.54      0.46      1922
+weighted avg       0.66      0.62      0.51      1922
+
+
+Fri Apr 14 12:07:16 2023
+Keep-k = 1
+Testing Accuracy : 0.608
+              precision    recall  f1-score   support
+
+           0       0.57      0.18      0.28       789
+           1       0.61      0.90      0.73      1133
+
+    accuracy                           0.61      1922
+   macro avg       0.59      0.54      0.50      1922
+weighted avg       0.60      0.61      0.55      1922
+
+
+Tue Apr 18 15:11:08 2023
+Keep-k = 2
+Testing Accuracy : 0.622
+              precision    recall  f1-score   support
+
+           0       0.68      0.15      0.25       789
+           1       0.62      0.95      0.75      1133
+
+    accuracy                           0.62      1922
+   macro avg       0.65      0.55      0.50      1922
+weighted avg       0.64      0.62      0.54      1922
+
+
+Tue Apr 18 16:52:31 2023
+Keep-k = 3
+Testing Accuracy : 0.606
+              precision    recall  f1-score   support
+
+           0       0.80      0.06      0.10       789
+           1       0.60      0.99      0.75      1133
+
+    accuracy                           0.61      1922
+   macro avg       0.70      0.52      0.43      1922
+weighted avg       0.68      0.61      0.48      1922
+
+
+Thu Apr 20 21:00:14 2023
+Keep-k = 4
+Testing Accuracy : 0.622
+              precision    recall  f1-score   support
+
+           0       0.54      0.47      0.51       789
+           1       0.66      0.72      0.69      1133
+
+    accuracy                           0.62      1922
+   macro avg       0.60      0.60      0.60      1922
+weighted avg       0.61      0.62      0.62      1922
+
+

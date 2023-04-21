@@ -1,0 +1,32 @@
+=====================RUN ID:  27=======================
+hatespeech-training.py --split 1 --max_len 300 --bias_in_fc True --add_cls_sep_tokens False --epochs 10 --encoder_frozen False --encoder_name bert-base-cased --data_path data/ --checkpoint_path . --message changed LR for ft+bert and changed dropout --dummy False --run_ID 27 --drop_out 0.40 --bert_lr 5e-7 --ft_lr 1e-6 MESSAGE : changed LR for ft+bert and changed dropout
+FINE TUNING LAYERS: 
+flat_dense): Linear(in_features=230400, out_features=768, bias=True)
+  (relu1): ReLU()
+  (fc1): Linear(in_features=768, out_features=128, bias=True)
+  (dropout1): Dropout(p=0.1, inplace=False)
+  (relu2): ReLU()
+  (fc2): Linear(in_features=128, out_features=2, bias=True)
+  (log_softmax): LogSoftmax(dim=1)
+
+Bert layers learning_rate: 5e-07finetuning Layers Learning rate: 1e-06encoder_name: bert-base-cased
+encoder_frozen?: False
+bias_in_fc?: True
+cls_token?: False
+Data split: 1
+Fri Apr 21 15:52:20 2023
+
+EPOCH: 1/10
+Training Loss: 0.635, Training Accuracy : 0.615
+Validation Loss: 0.695, Validation Accuracy : 0.601
+
+              precision    recall  f1-score   support
+
+           0       0.84      0.05      0.09       799
+           1       0.59      0.99      0.74      1125
+
+    accuracy                           0.60      1924
+   macro avg       0.72      0.52      0.42      1924
+weighted avg       0.70      0.60      0.47      1924
+
+

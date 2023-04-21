@@ -9,7 +9,7 @@ import re, pickle
 import psutil
 import time, datetime, pytz
 # !pip install emoji
-import emoji
+import emoji, transformers
 from tqdm import tqdm
 
 import pandas as pd
@@ -51,6 +51,7 @@ print("Training on {}".format(device))
 
 
 
+
 #argparser
 import argparse
 
@@ -69,7 +70,6 @@ parser.add_argument('--drop_out', type=float, default=0.4)
 parser.add_argument('--bert_lr', type=float, default=5e-07)
 parser.add_argument('--ft_lr', type=float, default=1e-6)
 parser.add_argument('--keep_k', type=int, default=0)
-parser.add_argument('--max_len', type=int, default=100)
 
 parser.add_argument('--run_ID', type=int, help='experiment run ID')
 
@@ -96,7 +96,7 @@ language = "en"
 dataset_parameter = {
                      'header' : 0,
                      'batch_size' : 8,
-                     'max_seq_len' : args.max_len,
+                     'max_seq_len' : 100,
                      'dataset_split' : [0.7, 0.15, 0.15],
                      'sentence_column' :   'text',         #'commentText',
                      'label_column' : 'label',            #'label',
@@ -379,7 +379,7 @@ def tokenize_word_ritwik2(text):
 
     # assert len(text) == len(tags)
     # onehot_encoding = pd.get_dummies(dataset_parameter['tag_set'])
-    for text_i in text:
+    for text_i in [text]:
         input_ids_i, attention_mask_i, word_break_i, word_break_len_i, tag1hot_i, tag_att_i = [model_parameter['tokenizer_cls_id']] if add_cls_sep_token_ids else [], [], [], 0, [], [0] if add_cls_sep_token_ids else []
 
         # tokenized_text_i = []
@@ -479,7 +479,7 @@ class Dataset_loader(Dataset):
 
 
         df['length'] = tokenizer_word_length(df[dataset_parameter['sentence_column']])
-        df = df[df.length < dataset_parameter['max_seq_len']]
+        df = df[df.length <dataset_parameter['max_seq_len']]
         
         text = list(df.iloc[:,0])
         label = list(df.iloc[:,1])
@@ -615,20 +615,6 @@ if args.bias_in_fc=='False':
 
 
 
-# model_name =  args.encoder_name +'-'+ encoder_layers+'-'+bias_in_fc+'-'+cls_token+'-'+'dataSplit'+str(args.split)
-
-
-train_dataset = Dataset_loader(args.data_path + 'train_split'+str(args.split)+'.json')
-test_dataset = Dataset_loader(args.data_path +'test_split'+str(args.split)+'.json')
-val_dataset = Dataset_loader(args.data_path +'val_split'+str(args.split)+'.json')
-
-train_dataloader  = DataLoader(  dataset=train_dataset, batch_size=dataset_parameter['batch_size'], num_workers=2)
-test_dataloader  = DataLoader(  dataset=test_dataset, batch_size=dataset_parameter['batch_size'], num_workers=2)
-val_dataloader  = DataLoader(  dataset=val_dataset, batch_size=dataset_parameter['batch_size'], num_workers=2)
-
-# train_dataloader, val_dataloader, test_dataloader  = dataloader_spliter(dataset)
-
-
 """
 # Model architecture """
 
@@ -671,6 +657,46 @@ val_dataloader  = DataLoader(  dataset=val_dataset, batch_size=dataset_parameter
 # 		self.relu2 =  nn.ReLU()    
 # 		self.fc2 = nn.Linear(128,2)
 # 		self.log_softmax = nn.LogSoftmax(dim=1)
+
+class mytokenizer(nn.Module):
+    def __init__(self,name, d):
+        super(mytokenizer, self).__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained(name)
+        self.special_tokens_map = self.tokenizer.special_tokens_map
+        if 'bos_token' not in self.special_tokens_map.keys():
+            self.special_tokens_map['bos_token'] = self.special_tokens_map['cls_token']
+        if 'eos_token' not in self.special_tokens_map.keys():
+            self.special_tokens_map['eos_token'] = self.special_tokens_map['sep_token']
+        self.device = d
+    
+    def forward(self, text):
+        # if type(text) == str:
+        #     text = [text]
+        assert type(text) == str
+        text = tokenize_my_sent(text)
+        input_ids, attention_mask, word_break, word_break_len = tokenize_word_ritwik2(text)
+        input_ids, attention_mask, word_break, word_break_len = torch.tensor(input_ids).to(self.device), torch.tensor(attention_mask).to(self.device),  torch.tensor(word_break).to(self.device), torch.tensor(word_break_len).to(self.device)
+        return transformers.tokenization_utils_base.BatchEncoding({'input_ids':input_ids, 'attention_mask':attention_mask, 'word_level':word_break, 'word_level_len':word_break_len})
+
+    def decode(self,x):
+        try:
+            print('before',x)
+            if type(x) == list and len(x) == 1:
+                y = x[0]
+            else:
+                y = x
+            # y = y.cpu()
+            print('after',y)
+            return self.tokenizer.convert_tokens_to_string(self.tokenizer.convert_ids_to_tokens(y))
+        except:
+            print(x)
+            print(type(x))
+            input('wait')
+
+
+
+
+
 
 class MODEL(nn.Module):
     def __init__(self, model):
@@ -744,7 +770,7 @@ class MODEL(nn.Module):
         word_level_embedding = word_level_embedding.to(device)
         if args.keep_k:
             word_level_embedding[:,args.keep_k:,:] = torch.tensor(0.0).to(word_level_embedding.device) # embedding masking. We are keeping the embeddings for first k (=4) words, rest are set to 0.
-            word_level_embedding[:,0:max(0,args.keep_k-1),:] = torch.tensor(0.0).to(word_level_embedding.device)
+            # word_level_embedding[:,0:1,:] = torch.tensor(0.0).to(word_level_embedding.device)
 
         if bert_model_parameter['word_level_mean_way']==1:
             word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
@@ -772,7 +798,8 @@ class MODEL(nn.Module):
         x = self.dropout1(x)
         x = self.fc2(x)    
         x = self.log_softmax(x)
-        return x, first_fc_layer_emb, word_level_embedding_flat
+        # return x, first_fc_layer_emb, word_level_embedding_flat
+        return transformers.modeling_outputs.SequenceClassifierOutput({'loss':None,'logits':x,'hidden_states':None, 'attentions':None})
         # return output, dense_layer_emb,  word_level_embedding_flat #also returning word_level_embedding to use it in calculating relevance at word-level
 
 
@@ -804,238 +831,8 @@ class MODEL(nn.Module):
         return label_proba, first_fc_layer_emb, word_level_embedding_flat
 
 model = MODEL(bert)
+device = 'cpu'
 model = model.to(device)
-
-
-
-
-
-bert_parameters = []
-ft_parameters = []
-
-for name, param in model.named_parameters():
-  if name.startswith('bert_model'):
-      bert_parameters.append(param)
-      # print(name,'for bert')
-  else:
-      ft_parameters.append(param)
-      # print(name, 'for ft')
-
-
-#get bert and finetuning layer parameters separate
-from transformers import get_linear_schedule_with_warmup
-
-# bert_parameters = []
-# # ft_parameters = []
-# bert_parameters = list(model.bert_model.parameters())
-# ft_parameters = list(model.fc1.parameters()) + list(model.fc2.parameters())
-
-
-bert_lr = args.bert_lr #1e-6
-ft_lr = args.ft_lr #3e-5
-
-#defining the two optimizers
-bert_optimizer = torch.optim.Adam(bert_parameters, lr=bert_lr)
-ft_optimizer = torch.optim.Adam(ft_parameters, lr=ft_lr)
-
-
-
-# define the learning rate schedules for the two optimizers
-bert_scheduler = get_linear_schedule_with_warmup(bert_optimizer, 
-                                                num_warmup_steps=len(train_dataloader), 
-                                                num_training_steps=len(train_dataloader)*training_parameter['epoch'])
-
-ft_scheduler = get_linear_schedule_with_warmup(ft_optimizer, 
-                                                  num_warmup_steps=len(train_dataloader), 
-                                                  num_training_steps=len(train_dataloader)*training_parameter['epoch'])
-
-
-
-def train(epoch):
-    """
-        In this model will be trained on train_dataloader which is defined earlier
-
-        epoch: epoch for verbose
-
-        return: loss and accuracy on whole training data (mean taken on batch)
-    """
-    running_batch_loss = 0.0
-    running_batch_accuracy = 0.0
-    
-    model.train()
-    with tqdm(train_dataloader, unit="batch") as tepoch:
-        temp_num = 0
-        for input_ids, attention_mask,  word_level, word_level_len, label in tepoch:
-            tepoch.set_description(f"Training Epoch {epoch}")
-            
-            input_ids, attention_mask,  word_level, word_level_len, label = input_ids.to(device), attention_mask.to(device),  word_level.to(device), word_level_len.to(device), label.to(device)
-             
-            # optimizer.zero_grad()
-          # zero out the gradients
-            bert_optimizer.zero_grad()
-            ft_optimizer.zero_grad()
-               
-            preds, first_fc_layer_emb, word_level_embedding_flat = model(input_ids, attention_mask,  word_level, word_level_len)
-            # print('pred: ', preds)
-            # print('label: ', label)
-
-            loss = loss_fn(preds, label)
-
-            loss.backward() 
-            # optimizer.step()
-
-            # update the parameters of the two optimizers
-            bert_optimizer.step()
-            ft_optimizer.step()
-
-            # update the learning rate schedulers
-            bert_scheduler.step()
-            ft_scheduler.step()
-            
-            batch_loss = loss.item()
-            running_batch_loss += batch_loss
-            
-            batch_accuracy = (((preds.max(1)[1]==label).sum()).item())/label.size(0)
-            running_batch_accuracy += batch_accuracy
-            
-            tepoch.set_postfix(loss=batch_loss, accuracy=(batch_accuracy))
-
-            del input_ids, attention_mask,  word_level, word_level_len, label, preds 
-
-            # if temp_num > 10:
-            #   break
-            # else:
-            #   temp_num+=1
-            
-    return running_batch_loss/len(train_dataloader), running_batch_accuracy/len(train_dataloader)
-       
-def validate(epoch):
-    """
-        In this model will be validation without changing any parameter of model on val_dataloader
-
-        epoch: epoch for verbose
-
-        return: loss and accuracy on whole training data (mean taken on batch)
-    """
-
-    predictions = []
-    true_labels = []
-
-    running_batch_loss = 0.0
-    running_batch_accuracy = 0.0
-    
-    model.eval()
-    with tqdm(val_dataloader, unit="batch") as tepoch:
-        
-        for input_ids, attention_mask, word_level, word_level_len, label in tepoch:
-            tepoch.set_description(f"Validation Epoch {epoch}")
-            
-            input_ids, attention_mask,  word_level, word_level_len, label = input_ids.to(device), attention_mask.to(device),  word_level.to(device), word_level_len.to(device), label.to(device)
-            
-            with torch.no_grad():   
-                preds, first_fc_layer_emb, word_level_embedding_flat = model(input_ids, attention_mask, word_level, word_level_len)
-                loss = loss_fn(preds, label)
-            
-                batch_loss = loss.item()
-                running_batch_loss += batch_loss
-            
-                batch_accuracy = (((preds.max(1)[1]==label).sum()).item())/label.size(0)
-                running_batch_accuracy += batch_accuracy
-
-                preds = preds.detach().cpu().numpy()
-                predictions.append(preds)
-
-                label = label.detach().cpu().numpy()
-                true_labels.append(label)
-                
-            tepoch.set_postfix(loss=batch_loss, accuracy=(batch_accuracy))
-
-            del input_ids, attention_mask,  word_level, word_level_len, label, preds     
-    predictions = np.concatenate(predictions, axis=0)    
-    predictions = np.argmax(predictions, axis = 1)
-
-    true_labels = np.concatenate(true_labels, axis=0) 
-
-            
-    return running_batch_loss/len(test_dataloader), running_batch_accuracy/len(test_dataloader), predictions, true_labels
-
-def test(test_dataloader):
-    """
-        Test model on test dataset
-
-        return: loss and accuracy on whole training data (mean taken on batch)
-    """
-    running_batch_loss = 0.0
-    running_batch_accuracy = 0.0
-
-    predictions = []
-    true_labels = []
-    
-    model.eval()
-    with tqdm(test_dataloader, unit="batch") as tepoch:
-        
-        for input_ids, attention_mask, word_level, word_level_len, label in tepoch:
-            tepoch.set_description(f"Testing on test dataset")
-            
-            input_ids, attention_mask, word_level, word_level_len, label = input_ids.to(device), attention_mask.to(device),  word_level.to(device), word_level_len.to(device), label.to(device)
-            
-            with torch.no_grad():
-                preds, first_fc_layer_emb, word_level_embedding_flat = model(input_ids, attention_mask,  word_level, word_level_len)
-                loss = loss_fn(preds, label)
-
-                batch_loss = loss.item()
-                running_batch_loss += batch_loss
-            
-                batch_accuracy = (((preds.max(1)[1]==label).sum()).item())/label.size(0)
-                running_batch_accuracy += batch_accuracy
-
-                preds = preds.detach().cpu().numpy()
-                predictions.append(preds)
-
-                label = label.detach().cpu().numpy()
-                true_labels.append(label)
-
-            del input_ids, attention_mask, word_level, word_level_len, label, preds
-            
-            tepoch.set_postfix(loss=batch_loss, accuracy=(batch_accuracy))
-    
-    predictions = np.concatenate(predictions, axis=0)    
-    predictions = np.argmax(predictions, axis = 1)
-
-    true_labels = np.concatenate(true_labels, axis=0) 
-
-    return running_batch_loss/len(test_dataloader), running_batch_accuracy/len(test_dataloader), predictions, true_labels
-
-
-
-
-
-
-"""# Train model"""
-
-# optimizer for model
-# optimizer = AdamW(model.parameters(), lr = training_parameter['optimizer_parameter']['lr'])
-
-# as we are using NLL loss function we can use class weights for imbalance dataset
-weights = torch.tensor(training_parameter['loss_func_parameter']['class_weight'], dtype=torch.float)
-weights = weights.to(device)
-
-# initialize loss
-loss_fn  = nn.NLLLoss(weight=weights)
-
-
-all_train_loss, all_val_loss = [], []
-all_train_accuracy, all_val_accuracy = [], []
-
-
-if not os.path.exists(args.checkpoint_path+'/reports'):
-    os.makedirs(args.checkpoint_path+'/reports')
-
-
-if not os.path.exists(args.checkpoint_path+'/trained_models'):
-    os.makedirs(args.checkpoint_path+'/trained_models')
-
-
 
 #saving checkpoints
 checkpoint_file = 'runID-'+str(args.run_ID)+'-'+'checkpoint.pth'
@@ -1044,104 +841,21 @@ start_epoch = 1
 if os.path.exists(args.checkpoint_path+'/trained_models/'+checkpoint_file):
 
     checkpoint = torch.load(args.checkpoint_path+'/trained_models/'+checkpoint_file)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    bert_optimizer.load_state_dict(checkpoint['bert_optimizer_state_dict'])
-    ft_optimizer.load_state_dict(checkpoint['ft_optimizer_state_dict'])
-    bert_scheduler.load_state_dict(checkpoint['bert_scheduler_state_dict']) 
-    ft_scheduler.load_state_dict(checkpoint['ft_scheduler_state_dict']) 
+    print(model.load_state_dict(checkpoint['model_state_dict']))
 
-    start_epoch = checkpoint['epoch']+1
+# print(model(**tokenizer(['hello string'],return_tensors="pt")))
 
+newtok = mytokenizer(bert_model_parameter['tokenizer'], device)
+print(newtok('You look behadstunning!'))
+# print(type(newtok('hello string')))
 
+print(model(**newtok('You look behadstunning!')))
+print(newtok.special_tokens_map)
+print(newtok.decode([torch.tensor([0])]))
+# input('wait')
+from ferret import Benchmark
 
-for epoch in range(start_epoch, args.epochs+1):
-    train_loss, train_accuracy = train(epoch)
-    val_loss, val_accuracy, val_predictions, val_true_labels  =  validate(epoch)
-
-
-    val_report = classification_report(val_true_labels, val_predictions)
-
-    if args.dummy=='False':
-        report_path = args.checkpoint_path+'/reports/'+'run_ID_'+str(args.run_ID)+'_classification_report.txt'
-        with open(report_path, 'a') as f:
-            if epoch==1:
-                f.write(f"=====================RUN ID:  {args.run_ID}=======================\n")
-                for sa in sys.argv:
-                    f.write(sa+' ')
-                f.write(f"MESSAGE : {args.message}\n")
-                f.write(f'FINE TUNING LAYERS: \n')
-                model_string = str(model)
-                start_index = model_string.find('flat_dense')
-                ft_layer_string = model_string[start_index:-1]
-                f.write(ft_layer_string)
-                f.write('\nBert layers learning_rate: ')
-                f.write(str(bert_lr))
-                f.write('finetuning Layers Learning rate: ')
-                f.write(str(ft_lr))
-
-                f.write(f'encoder_name: {args.encoder_name}\n')
-                f.write(f'encoder_frozen?: {args.encoder_frozen}\n')
-                f.write(f'bias_in_fc?: {bias_in_fc}\n')
-                f.write(f'cls_token?: {add_cls_sep_token_ids}\n')
-                f.write(f'Data split: {args.split}\n')
-                f.write(datetime.datetime.now(IST).strftime("%c")+'\n')
-
-            f.write(f"\nEPOCH: {epoch}/{args.epochs}\n")
-            f.write(f'Training Loss: {train_loss:.3f}, Training Accuracy : {train_accuracy:.3f}\n')
-            f.write(f'Validation Loss: {val_loss:.3f}, Validation Accuracy : {val_accuracy:.3f}\n')
-            f.write('\n')
-            f.write(val_report)
-            f.write('\n\n')
-
-        torch.save({
-            'epoch': epoch+1,
-            'model_state_dict': model.state_dict(),
-            'bert_optimizer_state_dict': bert_optimizer.state_dict(),
-            'ft_optimizer_state_dict': ft_optimizer.state_dict(),
-            'bert_scheduler_state_dict' : bert_scheduler.state_dict(),
-            'ft_scheduler_state_dict' : ft_scheduler.state_dict(),
-
-
-        }, args.checkpoint_path+'/trained_models/'+checkpoint_file)
-
-    print(f'Training Loss: {train_loss:.3f}, Accuracy : {train_accuracy:.3f}')
-    print(f'Validate Loss: {val_loss:.3f}, Accuracy : {val_accuracy:.3f}')
-    print()
-
-
-
-
-
-    all_train_loss.append(train_loss)
-    all_train_accuracy.append(train_accuracy)
-    all_val_loss.append(val_loss)
-    all_val_accuracy.append(val_accuracy)
-
-
-
-print('Done training model: ', checkpoint_file)
-
-
-
-test_loss, test_accuracy, prediction, true_labels = test(test_dataloader)
-
-
-# test_loss, test_accuracy, predictions, true_labels
-print("Classification report on Test data")
-report = classification_report(true_labels, prediction)
-print(confusion_matrix(true_labels, prediction))
-print(report)
-
-if args.dummy=='False':
-    report_path = args.checkpoint_path+'/reports/'+'run_ID_'+str(args.run_ID)+'_classification_report.txt'
-    with open(report_path, 'a') as f:
-        f.write(datetime.datetime.now(IST).strftime("%c")+'\n')
-        if args.keep_k:
-            f.write('Keep-k = '+str(args.keep_k)+'\n')
-        f.write(f'Testing Accuracy : {test_accuracy:.3f}')
-        f.write('\n')
-        f.write(report)
-        f.write('\n\n')
-
-print('run_ID',args.run_ID)
+bench = Benchmark(model, newtok)
+explanations = bench.explain("You look stunning!", target=1)
+print(explanations)
 

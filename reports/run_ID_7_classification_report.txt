@@ -315,3 +315,92 @@ Faithfulness
 Comprehensiveness :0.08975547422323285
 Sufficiency :-0.14382649385379417
 0.2911656731099971	0.30162449956880977	0.6538630882271298	0.08975547422323285	-0.14382649385379417
+Tue Apr 11 14:20:21 2023
+Testing Accuracy : 0.714
+              precision    recall  f1-score   support
+
+           0       0.73      0.47      0.57       782
+           1       0.71      0.88      0.79      1142
+
+    accuracy                           0.72      1924
+   macro avg       0.72      0.68      0.68      1924
+weighted avg       0.72      0.72      0.70      1924
+
+
+Tue Apr 11 15:04:53 2023
+Testing Accuracy : 0.713
+              precision    recall  f1-score   support
+
+           0       0.73      0.47      0.57       782
+           1       0.71      0.88      0.78      1142
+
+    accuracy                           0.71      1924
+   macro avg       0.72      0.68      0.68      1924
+weighted avg       0.72      0.71      0.70      1924
+
+
+Tue Apr 11 15:47:23 2023
+Keep-k = 
+Testing Accuracy : 0.726
+              precision    recall  f1-score   support
+
+           0       0.71      0.56      0.62       782
+           1       0.74      0.84      0.79      1142
+
+    accuracy                           0.73      1924
+   macro avg       0.72      0.70      0.71      1924
+weighted avg       0.72      0.73      0.72      1924
+
+
+Fri Apr 14 12:11:16 2023
+Keep-k = 1
+Testing Accuracy : 0.686
+              precision    recall  f1-score   support
+
+           0       0.73      0.36      0.48       782
+           1       0.67      0.91      0.77      1142
+
+    accuracy                           0.69      1924
+   macro avg       0.70      0.63      0.63      1924
+weighted avg       0.70      0.69      0.66      1924
+
+
+Tue Apr 18 15:16:31 2023
+Keep-k = 2
+Testing Accuracy : 0.714
+              precision    recall  f1-score   support
+
+           0       0.76      0.44      0.56       782
+           1       0.70      0.90      0.79      1142
+
+    accuracy                           0.71      1924
+   macro avg       0.73      0.67      0.67      1924
+weighted avg       0.72      0.71      0.69      1924
+
+
+Tue Apr 18 16:56:40 2023
+Keep-k = 3
+Testing Accuracy : 0.720
+              precision    recall  f1-score   support
+
+           0       0.76      0.46      0.57       782
+           1       0.71      0.90      0.79      1142
+
+    accuracy                           0.72      1924
+   macro avg       0.73      0.68      0.68      1924
+weighted avg       0.73      0.72      0.70      1924
+
+
+Thu Apr 20 21:04:08 2023
+Keep-k = 4
+Testing Accuracy : 0.706
+              precision    recall  f1-score   support
+
+           0       0.75      0.42      0.54       782
+           1       0.70      0.90      0.79      1142
+
+    accuracy                           0.71      1924
+   macro avg       0.72      0.66      0.66      1924
+weighted avg       0.72      0.71      0.69      1924
+
+

@@ -301,3 +301,106 @@ Faithfulness
 Comprehensiveness :0.06936826869329522
 Sufficiency :-0.04925480069906445
 0.20161662284817497	0.25672161427229345	0.5763180196464351	0.06936826869329522	-0.04925480069906445
+======= hatexplain metrics on: trained_models/runID-14-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --lime_num_features 10 --lime_num_samples 1500 --faithfullness_filtering top-k --split 3 --model_path trained_models/runID-14-checkpoint.pth --data_path data/ --encoder_name bert-base-multilingual-cased --encoder_frozen True 
+Begin Fri Apr  7 19:08:22 2023
+End Fri Apr  7 20:01:25 2023
+
+Plausibility
+IOU F1 :0.20005660004214582
+Token F1 :0.25224918561171217
+AUPRC :0.5775077355394952
+
+Faithfulness
+Comprehensiveness :0.06765346477359667
+Sufficiency :-0.048526167329002085
+0.20005660004214582	0.25224918561171217	0.5775077355394952	0.06765346477359667	-0.048526167329002085
+Tue Apr 11 14:32:52 2023
+Testing Accuracy : 0.594
+              precision    recall  f1-score   support
+
+           0       1.00      0.00      0.00       782
+           1       0.59      1.00      0.75      1142
+
+    accuracy                           0.59      1924
+   macro avg       0.80      0.50      0.37      1924
+weighted avg       0.76      0.59      0.44      1924
+
+
+Tue Apr 11 15:16:23 2023
+Testing Accuracy : 0.593
+              precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00       782
+           1       0.59      1.00      0.74      1142
+
+    accuracy                           0.59      1924
+   macro avg       0.30      0.50      0.37      1924
+weighted avg       0.35      0.59      0.44      1924
+
+
+Tue Apr 11 15:57:59 2023
+Keep-k = 5
+Testing Accuracy : 0.613
+              precision    recall  f1-score   support
+
+           0       0.74      0.07      0.13       782
+           1       0.61      0.98      0.75      1142
+
+    accuracy                           0.61      1924
+   macro avg       0.68      0.53      0.44      1924
+weighted avg       0.66      0.61      0.50      1924
+
+
+Fri Apr 14 12:20:36 2023
+Keep-k = 1
+Testing Accuracy : 0.594
+              precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00       782
+           1       0.59      1.00      0.74      1142
+
+    accuracy                           0.59      1924
+   macro avg       0.30      0.50      0.37      1924
+weighted avg       0.35      0.59      0.44      1924
+
+
+Tue Apr 18 15:27:56 2023
+Keep-k = 2
+Testing Accuracy : 0.593
+              precision    recall  f1-score   support
+
+           0       0.44      0.01      0.01       782
+           1       0.59      1.00      0.74      1142
+
+    accuracy                           0.59      1924
+   macro avg       0.52      0.50      0.38      1924
+weighted avg       0.53      0.59      0.45      1924
+
+
+Tue Apr 18 17:06:11 2023
+Keep-k = 3
+Testing Accuracy : 0.595
+              precision    recall  f1-score   support
+
+           0       0.60      0.01      0.02       782
+           1       0.59      1.00      0.74      1142
+
+    accuracy                           0.59      1924
+   macro avg       0.60      0.50      0.38      1924
+weighted avg       0.60      0.59      0.45      1924
+
+
+Thu Apr 20 21:13:26 2023
+Keep-k = 4
+Testing Accuracy : 0.604
+              precision    recall  f1-score   support
+
+           0       0.53      0.20      0.29       782
+           1       0.62      0.88      0.73      1142
+
+    accuracy                           0.60      1924
+   macro avg       0.58      0.54      0.51      1924
+weighted avg       0.58      0.60      0.55      1924
+
+
