@@ -340,3 +340,6 @@ Testing Accuracy : 0.739
 weighted avg       0.74      0.74      0.74      1922
 
 
+======= hatexplain metrics on: trained_models/runID-2-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 0 --max_len 300 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-2-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --encoder_frozen False 
+Begin Sun Apr 23 10:35:48 2023

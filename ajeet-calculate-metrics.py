@@ -80,8 +80,9 @@ parser.add_argument('--encoder_name', type=str, help='name of encoder, bert-base
 parser.add_argument('--drop_out', type=float, default=0.4)
 parser.add_argument('--encoder_frozen', type=str, help='encoder layers frozen or not', default='False')
 parser.add_argument('--add_cls_sep_tokens', type=str, help='add_cls_sep_tokens or not, True/False', default=False)
-parser.add_argument('--lime_num_samples', type=int, default=100)
+parser.add_argument('--lime_num_samples', type=int, default=1000)
 parser.add_argument('--lime_num_features', type=int, default=10)
+parser.add_argument('--max_len', type=int, default=100)
 
 
 args = parser.parse_args()
@@ -113,7 +114,7 @@ language = "hi"
 dataset_parameter = {
                      'header' : 0,
                      'batch_size' : 32,
-                     'max_seq_len' : 100,
+                     'max_seq_len' : args.max_len,
                      'dataset_split' : [0.7, 0.15, 0.15],
                      'sentence_column' :   'text',         #'commentText',
                      'label_column' : 'label',            #'label',
@@ -844,6 +845,7 @@ class MODEL(nn.Module):
 
 model = MODEL(bert)
 model = model.to(device)
+model.eval()
 
 
 

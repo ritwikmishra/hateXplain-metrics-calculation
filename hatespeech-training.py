@@ -70,6 +70,7 @@ parser.add_argument('--bert_lr', type=float, default=5e-07)
 parser.add_argument('--ft_lr', type=float, default=1e-6)
 parser.add_argument('--keep_k', type=int, default=0)
 parser.add_argument('--max_len', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=8)
 
 parser.add_argument('--run_ID', type=int, help='experiment run ID')
 
@@ -95,7 +96,7 @@ language = "en"
 # Parameters for dataset
 dataset_parameter = {
                      'header' : 0,
-                     'batch_size' : 8,
+                     'batch_size' : args.batch_size,
                      'max_seq_len' : args.max_len,
                      'dataset_split' : [0.7, 0.15, 0.15],
                      'sentence_column' :   'text',         #'commentText',
@@ -700,11 +701,13 @@ class MODEL(nn.Module):
                                                                        requires_grad=True)))
         elif model_parameter['word_level_mean_way'] == 5:
             self.flat_dense = nn.Linear(dataset_parameter['max_seq_len']*model_parameter['second_last_layer_size'], model_parameter['second_last_layer_size'])
+            # self.flat_dense = nn.Linear(model_parameter['second_last_layer_size'], int(model_parameter['second_last_layer_size']/2))
             
         self.activation = training_parameter["activation_function"]
         self.relu1 = nn.ReLU()
 
         self.fc1 = nn.Linear(model_parameter['second_last_layer_size'], 128)
+        # self.fc1 = nn.Linear(int(model_parameter['second_last_layer_size']/2), 128)
         self.dropout1 = nn.Dropout(0.1)
         self.relu2 = nn.ReLU()
         self.fc2 = nn.Linear(128, 2)
@@ -744,7 +747,7 @@ class MODEL(nn.Module):
         word_level_embedding = word_level_embedding.to(device)
         if args.keep_k:
             word_level_embedding[:,args.keep_k:,:] = torch.tensor(0.0).to(word_level_embedding.device) # embedding masking. We are keeping the embeddings for first k (=4) words, rest are set to 0.
-            word_level_embedding[:,0:max(0,args.keep_k-1),:] = torch.tensor(0.0).to(word_level_embedding.device)
+            # word_level_embedding[:,0:max(0,args.keep_k-1),:] = torch.tensor(0.0).to(word_level_embedding.device)
 
         if bert_model_parameter['word_level_mean_way']==1:
             word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
@@ -763,6 +766,7 @@ class MODEL(nn.Module):
             output = torch.mean(word_level_embedding_mean, 1)
         elif bert_model_parameter['word_level_mean_way']==5:
             word_level_embedding_flat = torch.flatten(word_level_embedding, start_dim=1)
+            # word_level_embedding_flat = word_level_embedding[:,0]
             output = model.flat_dense(word_level_embedding_flat)
         first_fc_layer_emb = output #its size will be 768 in any mean-type way
 
@@ -1045,10 +1049,10 @@ if os.path.exists(args.checkpoint_path+'/trained_models/'+checkpoint_file):
 
     checkpoint = torch.load(args.checkpoint_path+'/trained_models/'+checkpoint_file)
     model.load_state_dict(checkpoint['model_state_dict'])
-    bert_optimizer.load_state_dict(checkpoint['bert_optimizer_state_dict'])
-    ft_optimizer.load_state_dict(checkpoint['ft_optimizer_state_dict'])
-    bert_scheduler.load_state_dict(checkpoint['bert_scheduler_state_dict']) 
-    ft_scheduler.load_state_dict(checkpoint['ft_scheduler_state_dict']) 
+    # bert_optimizer.load_state_dict(checkpoint['bert_optimizer_state_dict'])
+    # ft_optimizer.load_state_dict(checkpoint['ft_optimizer_state_dict'])
+    # bert_scheduler.load_state_dict(checkpoint['bert_scheduler_state_dict']) 
+    # ft_scheduler.load_state_dict(checkpoint['ft_scheduler_state_dict']) 
 
     start_epoch = checkpoint['epoch']+1
 
@@ -1094,7 +1098,7 @@ for epoch in range(start_epoch, args.epochs+1):
             f.write('\n\n')
 
         torch.save({
-            'epoch': epoch+1,
+            'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'bert_optimizer_state_dict': bert_optimizer.state_dict(),
             'ft_optimizer_state_dict': ft_optimizer.state_dict(),

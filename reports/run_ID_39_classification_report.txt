@@ -1,0 +1,261 @@
+=====================RUN ID:  39=======================
+hatespeech-training.py --split 1 --max_len 300 --bias_in_fc True --add_cls_sep_tokens False --epochs 10 --encoder_frozen False --encoder_name roberta-base --data_path data/ --checkpoint_path . --message same params as run id 2 --dummy False --run_ID 39 --drop_out 0.40 --bert_lr 5e-7 --ft_lr 1e-6 MESSAGE : same params as run id 2
+FINE TUNING LAYERS: 
+flat_dense): Linear(in_features=230400, out_features=768, bias=True)
+  (relu1): ReLU()
+  (fc1): Linear(in_features=768, out_features=128, bias=True)
+  (dropout1): Dropout(p=0.1, inplace=False)
+  (relu2): ReLU()
+  (fc2): Linear(in_features=128, out_features=2, bias=True)
+  (log_softmax): LogSoftmax(dim=1)
+
+Bert layers learning_rate: 5e-07finetuning Layers Learning rate: 1e-06encoder_name: roberta-base
+encoder_frozen?: False
+bias_in_fc?: True
+cls_token?: False
+Data split: 1
+Sat Apr 22 08:23:31 2023
+
+EPOCH: 1/10
+Training Loss: 0.644, Training Accuracy : 0.599
+Validation Loss: 0.676, Validation Accuracy : 0.596
+
+              precision    recall  f1-score   support
+
+           0       0.68      0.05      0.10       799
+           1       0.59      0.98      0.74      1125
+
+    accuracy                           0.60      1924
+   macro avg       0.64      0.52      0.42      1924
+weighted avg       0.63      0.60      0.47      1924
+
+
+
+EPOCH: 2/10
+Training Loss: 0.577, Training Accuracy : 0.693
+Validation Loss: 0.638, Validation Accuracy : 0.652
+
+              precision    recall  f1-score   support
+
+           0       0.74      0.25      0.37       799
+           1       0.64      0.94      0.76      1125
+
+    accuracy                           0.65      1924
+   macro avg       0.69      0.59      0.57      1924
+weighted avg       0.68      0.65      0.60      1924
+
+
+
+EPOCH: 3/10
+Training Loss: 0.531, Training Accuracy : 0.725
+Validation Loss: 0.631, Validation Accuracy : 0.663
+
+              precision    recall  f1-score   support
+
+           0       0.78      0.26      0.39       799
+           1       0.64      0.95      0.77      1125
+
+    accuracy                           0.66      1924
+   macro avg       0.71      0.60      0.58      1924
+weighted avg       0.70      0.66      0.61      1924
+
+
+
+EPOCH: 4/10
+Training Loss: 0.499, Training Accuracy : 0.753
+Validation Loss: 0.634, Validation Accuracy : 0.671
+
+              precision    recall  f1-score   support
+
+           0       0.79      0.28      0.42       799
+           1       0.65      0.94      0.77      1125
+
+    accuracy                           0.67      1924
+   macro avg       0.72      0.61      0.59      1924
+weighted avg       0.71      0.67      0.62      1924
+
+
+
+EPOCH: 5/10
+Training Loss: 0.482, Training Accuracy : 0.763
+Validation Loss: 0.623, Validation Accuracy : 0.683
+
+              precision    recall  f1-score   support
+
+           0       0.77      0.33      0.47       799
+           1       0.66      0.93      0.77      1125
+
+    accuracy                           0.68      1924
+   macro avg       0.72      0.63      0.62      1924
+weighted avg       0.71      0.68      0.65      1924
+
+
+
+EPOCH: 6/10
+Training Loss: 0.468, Training Accuracy : 0.769
+Validation Loss: 0.624, Validation Accuracy : 0.685
+
+              precision    recall  f1-score   support
+
+           0       0.79      0.33      0.47       799
+           1       0.66      0.94      0.78      1125
+
+    accuracy                           0.69      1924
+   macro avg       0.72      0.63      0.62      1924
+weighted avg       0.71      0.69      0.65      1924
+
+
+
+EPOCH: 7/10
+Training Loss: 0.460, Training Accuracy : 0.776
+Validation Loss: 0.606, Validation Accuracy : 0.698
+
+              precision    recall  f1-score   support
+
+           0       0.80      0.36      0.50       799
+           1       0.67      0.94      0.78      1125
+
+    accuracy                           0.70      1924
+   macro avg       0.74      0.65      0.64      1924
+weighted avg       0.73      0.70      0.67      1924
+
+
+
+EPOCH: 8/10
+Training Loss: 0.453, Training Accuracy : 0.777
+Validation Loss: 0.594, Validation Accuracy : 0.702
+
+              precision    recall  f1-score   support
+
+           0       0.78      0.39      0.52       799
+           1       0.68      0.92      0.78      1125
+
+    accuracy                           0.70      1924
+   macro avg       0.73      0.66      0.65      1924
+weighted avg       0.72      0.70      0.68      1924
+
+
+
+EPOCH: 9/10
+Training Loss: 0.451, Training Accuracy : 0.779
+Validation Loss: 0.582, Validation Accuracy : 0.707
+
+              precision    recall  f1-score   support
+
+           0       0.76      0.43      0.55       799
+           1       0.69      0.91      0.78      1125
+
+    accuracy                           0.71      1924
+   macro avg       0.73      0.67      0.67      1924
+weighted avg       0.72      0.71      0.69      1924
+
+
+
+EPOCH: 10/10
+Training Loss: 0.460, Training Accuracy : 0.773
+Validation Loss: 0.552, Validation Accuracy : 0.721
+
+              precision    recall  f1-score   support
+
+           0       0.73      0.52      0.61       799
+           1       0.72      0.86      0.78      1125
+
+    accuracy                           0.72      1924
+   macro avg       0.72      0.69      0.70      1924
+weighted avg       0.72      0.72      0.71      1924
+
+
+Sat Apr 22 09:46:17 2023
+Testing Accuracy : 0.739
+              precision    recall  f1-score   support
+
+           0       0.75      0.54      0.63       789
+           1       0.73      0.87      0.80      1133
+
+    accuracy                           0.74      1922
+   macro avg       0.74      0.71      0.71      1922
+weighted avg       0.74      0.74      0.73      1922
+
+
+======= hatexplain metrics on: trained_models/runID-39-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 1 --max_len 300 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-39-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen False 
+Begin Sat Apr 22 22:49:34 2023
+End Sun Apr 23 00:29:05 2023
+
+Plausibility
+IOU F1 :0.12330621320501035
+Token F1 :0.17451786079623105
+AUPRC :0.4775706532505061
+
+Faithfulness
+Comprehensiveness :0.11707653201024974
+Sufficiency :0.20046509454614983
+0.12330621320501035	0.17451786079623105	0.4775706532505061	0.11707653201024974	0.20046509454614983
+======= hatexplain metrics on: trained_models/runID-39-checkpoint.pth==========
+ajeet-calculate-metrics.py --method lime --max_len 300 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-39-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen False 
+Begin Sun Apr 23 00:29:17 2023
+End Sun Apr 23 01:27:57 2023
+
+Plausibility
+IOU F1 :0.24793924004026865
+Token F1 :0.26932092008749753
+AUPRC :0.623148746429664
+
+Faithfulness
+Comprehensiveness :0.039992568028824144
+Sufficiency :-0.13116507676321543
+0.24793924004026865	0.26932092008749753	0.623148746429664	0.039992568028824144	-0.13116507676321543
+======= hatexplain metrics on: trained_models/runID-39-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 0 --max_len 300 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-39-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen False 
+Begin Sun Apr 23 18:42:22 2023
+End Sun Apr 23 19:30:10 2023
+
+Plausibility
+IOU F1 :0.11930808012626798
+Token F1 :0.17769075488215766
+AUPRC :0.4776640049127164
+
+Faithfulness
+Comprehensiveness :0.1172150630121228
+Sufficiency :0.20090260383402708
+0.11930808012626798	0.17769075488215766	0.4776640049127164	0.1172150630121228	0.20090260383402708
+======= hatexplain metrics on: trained_models/runID-39-checkpoint.pth==========
+ajeet-calculate-metrics.py --method 2 --max_len 300 --faithfullness_filtering top-k --split 1 --model_path trained_models/runID-39-checkpoint.pth --data_path data/ --encoder_name roberta-base --encoder_frozen False 
+Begin Sun Apr 23 19:30:18 2023
+End Sun Apr 23 20:21:13 2023
+
+Plausibility
+IOU F1 :0.12043059279256887
+Token F1 :0.17499029831702256
+AUPRC :0.47607494186135835
+
+Faithfulness
+Comprehensiveness :0.11514059222065558
+Sufficiency :0.20345517377195627
+0.12043059279256887	0.17499029831702256	0.47607494186135835	0.11514059222065558	0.20345517377195627
+Mon Apr 24 18:20:48 2023
+Keep-k = 1
+Testing Accuracy : 0.602
+              precision    recall  f1-score   support
+
+           0       0.80      0.04      0.08       789
+           1       0.60      0.99      0.75      1133
+
+    accuracy                           0.60      1922
+   macro avg       0.70      0.52      0.41      1922
+weighted avg       0.68      0.60      0.47      1922
+
+
+Mon Apr 24 18:22:20 2023
+Keep-k = 2
+Testing Accuracy : 0.642
+              precision    recall  f1-score   support
+
+           0       0.75      0.19      0.31       789
+           1       0.63      0.95      0.76      1133
+
+    accuracy                           0.64      1922
+   macro avg       0.69      0.57      0.53      1922
+weighted avg       0.68      0.64      0.57      1922
+
+
