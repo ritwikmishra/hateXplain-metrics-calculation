@@ -55,6 +55,11 @@ from sklearn.metrics import roc_auc_score
 from collections import Counter
 
 import time, datetime, pytz
+from ferret import Benchmark
+from ferret.explainers.lime import LIMEExplainer
+from ferret.explainers.shap import SHAPExplainer
+
+
 
 """### Cache location
 
@@ -71,7 +76,7 @@ import argparse, sys
 
 parser = argparse.ArgumentParser(description='to generate LRP & LIME scores on test_data in ERASER format')
 
-parser.add_argument('--method', type=str, help='method if lrp then enter 0/1/2, if lime then enter "lime"')
+parser.add_argument('--method', type=str, help='method if lrp then enter 0/1/2, if lime then enter "lime", if "shap" then enter "shape"')
 parser.add_argument('--faithfullness_filtering', type=str, help='top-k tokens or above a threshold, top-k/0.5', default='top-k')
 parser.add_argument('--split', type=int, help='data split, 1/2/3')
 parser.add_argument('--model_path', type=str, help='path of model checkpoints using which LRP/LIME scores needed to calculate')
@@ -1351,7 +1356,7 @@ hateXplain_df = hateXplain_df.T
 
 # for THRESHOLD in thresholds:
 
-if args.method!='lime':
+if args.method!='lime' and args.method!='shap':
     for i in range(0, 1):
         LRP_VARIANT = int(args.method)
         THRESHOLD =0.50
@@ -1813,7 +1818,7 @@ if args.method!='lime':
 
 #   "========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
 
-else :
+elif args.method=='lime' :
     hateXplain_df = pd.read_json(args.data_path+'dataset.json')
     hateXplain_df = hateXplain_df.T
     thresholds = [0.50, 0.55, 0.60, 0.65]
@@ -1853,29 +1858,40 @@ else :
 
         for i in tqdm(range(test_df.shape[0]), desc='getting lime scores...'):
             text = test_df.iloc[i]['commentText']
-            # text = preprocess_text(text)
 
 
-            explanation = explainer.explain_instance(text, lime_predict_proba, num_features=args.lime_num_features, num_samples=args.lime_num_samples)
-            lime_score_dict = {}
-            for ele in explanation.as_list():
-                lime_score_dict[ele[0]] = ele[1]
-
-            lime_score_list = []
-            # temp_text = tokenize_my_sent(text)
             text_tokens = text.split()
-            text_tokens = [tk for tk in text_tokens if tk!='']
+            # text_tokens = [tk for tk in text_tokens if tk!=''] #not needed when using ritwik's way of LIME score calculation
 
 
-            for token in text_tokens:
-                # print('token: ', token)
-                # print('len(token): ', len(token))
+            # explanation = explainer.explain_instance(text, lime_predict_proba, num_features=args.lime_num_features, num_samples=args.lime_num_samples)
+            # lime_score_dict = {}
+            # for ele in explanation.as_list():
+            #     lime_score_dict[ele[0]] = ele[1]
 
-                if token in lime_score_dict:
-                    lime_score_list.append(lime_score_dict[token])
-                else:
-                    omitted_tokens.append((i, token))
-                    lime_score_list.append(0) #add 0 relevance to omitted-token
+            # lime_score_list = []
+            # # temp_text = tokenize_my_sent(text)
+            # text_tokens = text.split()
+            # text_tokens = [tk for tk in text_tokens if tk!='']
+
+
+            # for token in text_tokens:
+            #     # print('token: ', token)
+            #     # print('len(token): ', len(token))
+
+            #     if token in lime_score_dict:
+            #         lime_score_list.append(lime_score_dict[token])
+            #     else:
+            #         omitted_tokens.append((i, token))
+            #         lime_score_list.append(0) #add 0 relevance to omitted-token
+
+
+            #================RITWIK'S WAY OF LIME SCORES CALCULATIONS================
+            bench = Benchmark(model, tokenizer, explainers=[LIMEExplainer(model, tokenizer)])
+            explanations = bench.explain(text, target=1)
+            benchmark_df = bench.get_dataframe(explanations)
+
+            lime_score_list = list(benchmark_df.iloc[0])[1:-1] #discard relevance of [SEP] & [CLS]
 
 
  
@@ -1889,7 +1905,10 @@ else :
 
             assert len(lime_score_list) == len(text_tokens), 'lime_score_list is not equal to text_tokens'
 
-            output_proba = np.exp(explanation.predict_proba) #exp(of log_softmax output) --> probability distribution for the nodes
+
+            # output_proba = np.exp(explanation.predict_proba) #exp(of log_softmax output) --> probability distribution for the nodes
+
+            output_proba, _ , _ = model.predict(text)
             non_toxic_proba = float(output_proba[0])
             toxic_proba = float(output_proba[1])
 
@@ -2201,7 +2220,383 @@ else :
 
 
 
+#===========================SHAP EXPLANATIONS IN ERASER FORMAT====================================
+elif args.method=='shap' :
+    hateXplain_df = pd.read_json(args.data_path+'dataset.json')
+    hateXplain_df = hateXplain_df.T
+    thresholds = [0.50, 0.55, 0.60, 0.65]
+    THRESHOLD = 0.50
 
+
+    with open(test_file) as f:
+        test_data = [json.loads(line) for line in f]
+    #classification and classification_scores
+
+    test_docid =[]
+    test_texts =[]
+
+    to_remove_unicodes = {'\x92', '\u200b', '\u200d', '\u200f', '\u202a', '\u202c', '\ufeff'}
+
+
+    for i in tqdm(range(len(test_data)), desc='getting docids and corresponding text...'):
+        test_docid.append(test_data[i]['annotation_id'])
+        sent = " ".join(list(hateXplain_df[hateXplain_df.post_id==test_data[i]['annotation_id']]['post_tokens'])[0])
+        for code in to_remove_unicodes:
+            sent = sent.replace(code, ' u200')
+
+        test_texts.append(sent)
+
+
+    test_df = pd.DataFrame(test_docid, columns=['annotation_id'])
+    test_df['commentText'] = test_texts
+    test_df.head()
+
+
+    omitted_tokens = []
+    def run_shap(test_df):
+        all_labels  = []
+        all_output_proba  = []
+        all_shap_scores = []
+        all_post_tokens_cleaned = []
+
+        for i in tqdm(range(test_df.shape[0]), desc='getting shap scores...'):
+            text = test_df.iloc[i]['commentText']
+
+
+            text_tokens = text.split()
+
+
+            #================= SHAP SCORES CALCULATIONS================
+            bench = Benchmark(model, tokenizer, explainers=[SHAPExplainer(model, tokenizer)])
+            explanations = bench.explain(text, target=1)
+            benchmark_df = bench.get_dataframe(explanations)
+
+            shap_score_list = list(benchmark_df.iloc[0])[1:-1] #discard relevance of [SEP] & [CLS]
+
+
+ 
+            min_shap_score = min(shap_score_list)
+            shap_score_list = [score-min_shap_score for score in shap_score_list]
+            max_shap_score = max(shap_score_list)
+            
+            assert max_shap_score!=0, 'max_shap_score is 0'
+
+            shap_score_list = [score/max_shap_score for score in shap_score_list]
+
+            assert len(shap_score_list) == len(text_tokens), 'shap_score_list is not equal to text_tokens'
+
+
+            # output_proba = np.exp(explanation.predict_proba) #exp(of log_softmax output) --> probability distribution for the nodes
+
+            output_proba, _ , _ = model.predict(text)
+            non_toxic_proba = float(output_proba[0])
+            toxic_proba = float(output_proba[1])
+
+            label = 'non-toxic'
+            if toxic_proba>non_toxic_proba:
+                label = 'toxic'
+
+      
+
+            all_labels.append(label)
+            all_output_proba.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+            all_shap_scores.append(shap_score_list)
+            all_post_tokens_cleaned.append(text_tokens)
+
+        return all_labels, all_output_proba, all_shap_scores, all_post_tokens_cleaned
+
+
+
+
+    all_labels, all_output_proba, all_shap_scores, all_post_tokens_cleaned =  run_shap(test_df)
+
+    if any(item is np.nan for item in all_output_proba):
+        print("There is a NaN value in the classification_scores.")
+    
+    test_df['post_tokens_cleaned'] = all_post_tokens_cleaned
+    test_df['classification'] = all_labels
+    test_df['classification_scores'] = all_output_proba
+    test_df['shap_scores'] = all_shap_scores
+
+
+
+    #creating rationales
+
+    def find_ranges(L):
+      # L = [1 if ele>0.5 else 0 for ele in L]
+        if len(L)!=0:
+            first = last = L[0]
+            for n in L[1:]:
+                if n - 1 == last: # Part of the group, bump the end
+                    last = n
+                else: # Not part of the group, yield current group and start a new
+                    yield first, last
+                    first = last = n
+            yield first, last # Yield the last group
+
+
+
+    def get_rationales(post_id, shap_scores):
+        soft_rationale_predictions = shap_scores
+
+
+        curr_thres= THRESHOLD
+        flag = False    #appropriate threshold found or not
+        hard_rationale = []
+        while flag==False:
+            ones_count = 0
+            for idx in range(len(shap_scores)):
+                if shap_scores[idx]>curr_thres:
+                    ones_count+=1
+                    hard_rationale.append(1)
+                else:
+                    hard_rationale.append(0)
+            if ones_count==len(shap_scores): #if all tokens are relevent then increase the threshold by 0.1
+                curr_thres+=0.1
+                hard_rationale = []
+            else:
+                flag = True    #appropriate threshold found!
+
+
+
+        rationales = []
+        indexes = sorted([i for i, each in enumerate(hard_rationale) if each==1])
+        span_list = list(find_ranges(indexes))
+
+        hard_rationale_predictions = []
+        for each in span_list:
+            if type(each)== int:
+                start = each
+                end = each+1
+            elif len(each) == 2:
+                start = each[0]
+                end = each[1]+1
+            else:
+                print('error')
+
+            hard_rationale_predictions.append({
+                "start_token": start,
+                "end_token": end})
+          
+        rationales.append({
+          'docid' : post_id,
+          'hard_rationale_predictions': hard_rationale_predictions,
+          'soft_rationale_predictions': soft_rationale_predictions,
+          'threshold': curr_thres
+
+      })
+        return rationales
+
+
+
+    rationales_for_output_file = []
+
+
+    for i in tqdm(range(test_df.shape[0]), desc='getting rationales...'):
+        post_id = test_df.iloc[i]['annotation_id']
+
+        shap_scores = list(test_df.iloc[i]['shap_scores'])
+        rationales_for_output_file.append(get_rationales(post_id, shap_scores))
+
+    test_df['rationales'] = rationales_for_output_file
+
+    # #helper fns for sufficiency calculation
+    def get_topK_indices( soft_rationale_predictions, k=5):
+        isTopk = args.faithfullness_filtering=='top-k'
+
+
+        if isTopk:
+            index = list(range(len(soft_rationale_predictions)))
+            s = sorted(index, reverse=True, key=lambda i: soft_rationale_predictions[i])
+            return s[:k]
+        #else removing all tokens have LRP value>threshold
+        threshold = float(args.faithfullness_filtering)
+        indices_to_remove = [idx for idx, x in enumerate(soft_rationale_predictions) if x>threshold] #find the indexes of all the relevent tokens
+
+        assert len(indices_to_remove)!=len(soft_rationale_predictions), 'Inside get_topK_indices(), all tokens removed'
+        return indices_to_remove
+
+
+    test_df['to_remove_indices'] = test_df['rationales'].apply(lambda r : get_topK_indices(r[0]['soft_rationale_predictions']))
+
+    def remove_topK_relevent_words(post_tokens, to_remove_indices):
+        new_text = [v for i, v in enumerate(post_tokens) if i not in to_remove_indices]
+        return " ".join(new_text)
+
+
+    def get_topK_relevent_words(post_tokens, to_remove_indices):
+        new_text = [post_tokens[i] for i in to_remove_indices]
+        return " ".join(new_text)
+
+
+    texts_after_removing = []
+    for i in range(test_df.shape[0]):
+        text = test_df.iloc[i]['commentText']
+        token_list = text.split()
+        to_remove_indices = test_df.iloc[i]['to_remove_indices']
+        texts_after_removing.append(remove_topK_relevent_words(token_list, to_remove_indices))
+
+    text_of_top_relevant_tokens = []
+    for i in range(test_df.shape[0]):
+        text = test_df.iloc[i]['commentText']
+        token_list = text.split()
+
+
+        to_remove_indices = test_df.iloc[i]['to_remove_indices']
+        text_of_top_relevant_tokens.append(get_topK_relevent_words(token_list, to_remove_indices))
+
+    test_df['text_after_removing_relevant_tokens'] = texts_after_removing
+    test_df['text_of_top_relevant_tokens'] = text_of_top_relevant_tokens
+
+    test_df.head()
+
+
+
+    def run_model_after_removing_top_relevant_tokens(test_df):
+
+        comprehensiveness_classification_scores  = []
+
+        for i in tqdm(range(test_df.shape[0]), desc='getting comprehensiveness scores...'):
+            text = test_df.iloc[i]['text_after_removing_relevant_tokens']
+
+            # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+            #     label_proba,_, _ = model.predict2(text)
+            # else:
+            #     label_proba,_, _ = model.predict(text)
+
+            # temp_text = tokenize_my_sent(text)
+            text_len = len(text.split())
+
+            # print('text_len: ', text_len)
+            # print('temp_text: ', temp_text)
+
+            if len(text)==0:
+                text = tokenizer.convert_ids_to_tokens([bert_model_parameter['tokenizer_pad_id']])[0]
+                # print('text: ', text)
+                # input('ADDED PAD TOKEN')
+
+            # if test_df.iloc[i]['annotation_id']=='1179098097160470529_twitter':
+            #     label_proba,_, _ = model.predict2(text, '1179098097160470529_twitter')
+            # else:
+            #     label_proba,_, _ = model.predict(text)
+
+
+            try:
+                label_proba,_, _ = model.predict(text)
+            except Exception as e:
+                print('original text:  ', test_df.iloc[i]['commentText'])
+                print('len(text): ', len(text))
+                print('text: ', text)
+                print('e:', e)
+                # input('ERROR AA GAYA')
+
+            non_toxic_proba = float(label_proba[0] )
+            toxic_proba = float(label_proba[1])
+
+
+
+            label = 'non-toxic'
+            if toxic_proba>non_toxic_proba:
+                label = 'toxic'
+
+
+            if (non_toxic_proba is np.nan) or (toxic_proba is np.nan):
+                print(text)
+                print('annotatorid: ', test_df.iloc[i]['annotation_id'])
+                print('--------------------------------------------------')
+
+            # if test_df.iloc[i]['annotation_id']=='1179053578285133824_twitter': # 1179098097160470529_twitter
+            #     print('text: ', text)
+            #     print()
+            #     print(label_proba)
+            #     print()
+            #     print()
+            #     # input()
+            #     label = 'toxic'
+            #     toxic_proba = 0.55
+            #     non_toxic_proba = 0.45
+
+
+            comprehensiveness_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+
+        return comprehensiveness_classification_scores
+
+    comprehensiveness_classification_scores = run_model_after_removing_top_relevant_tokens(test_df)
+
+    # input()
+    
+
+    # print('comprehensiveness_classification_scores: ',comprehensiveness_classification_scores)
+    test_df['comprehensiveness_classification_scores'] = comprehensiveness_classification_scores
+
+    #suffiency score
+
+    def run_model_on_top_relevant_tokens(test_df):
+
+        sufficiency_classification_scores  = []
+
+        for i in tqdm(range(test_df.shape[0]), desc='getting sufficiency scores...'):
+            
+            text = test_df.iloc[i]['text_of_top_relevant_tokens']
+
+
+            label_proba,_, _ = model.predict(text)
+            non_toxic_proba = float(label_proba[0]) #since output_proba is a 2*1 array
+            toxic_proba = float(label_proba[1])
+
+            label = 'non-toxic'
+            if toxic_proba>non_toxic_proba:
+                label = 'toxic'
+
+            if non_toxic_proba is np.nan or toxic_proba is np.nan:
+                print(text)
+                print(i)
+            sufficiency_classification_scores.append( {'non-toxic':non_toxic_proba, 'toxic': toxic_proba})
+
+        return sufficiency_classification_scores
+
+    sufficiency_classification_scores = run_model_on_top_relevant_tokens(test_df)
+    test_df['sufficiency_classification_scores'] = sufficiency_classification_scores
+
+
+    #thresholded_scores calculation
+    thresholded_scores = []
+    for i in range(test_df.shape[0]):
+        temp_list = []
+        temp_dict = {}
+        temp_dict['threshold'] = 0.5
+        temp_dict['comprehensiveness_classification_scores'] = test_df.iloc[i]['comprehensiveness_classification_scores']
+        temp_dict['sufficiency_classification_scores'] = test_df.iloc[i]['sufficiency_classification_scores']
+
+        temp_list.append(temp_dict)
+
+        thresholded_scores.append(temp_list)
+
+    test_df['thresholded_scores'] = thresholded_scores
+    test_df = test_df[['annotation_id', 'rationales',  'classification', 'classification_scores', 'comprehensiveness_classification_scores', 'sufficiency_classification_scores', 'thresholded_scores']]
+    print('test_df.shape: ', test_df.shape)
+
+
+
+    # Set the path of the directory and create it if it doesn't exist
+    dir_path = 'explanation_dicts'
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    # Set the path of the output file
+    output_file_path = os.path.join(dir_path, model_name + '-dataSplit'+str(args.split)+  '-SHAPE-' + 'faithfullness_filtering-' + args.faithfullness_filtering + '.json')
+
+    # Print the output file path to check if it's what you expect
+    print("Output file path:", output_file_path)
+
+    # Write the JSON data to the output file
+    test_df.to_json(output_file_path, orient="records")
+
+    # Print a message to confirm that the file was saved
+    if os.path.isfile(output_file_path):
+        print("================File saved successfully=========")
+    else:
+        print(" ===============File not saved=================")
 
 
 
