@@ -422,7 +422,30 @@ from ferret.explainers.lime import LIMEExplainer
 from ferret.explainers.shap import SHAPExplainer
 
 bench = Benchmark(model, tokenizer, explainers=[SHAPExplainer(model, tokenizer),LIMEExplainer(model, tokenizer)])
-explanations = bench.explain("I will kill Hitler", target=1)
-print(bench.get_dataframe(explanations))
+sentence = 'only elite looters are enriched when they import a 6 0 iq moslem onto welfare section <number> homeless vets would not need taxpayer paid classes on how to use toilets in free homes'
+
+sentence = tokenize_my_sent(sentence)
+_, _, word_break, _ = tokenize_word_ritwik([sentence])
+l = len(sentence.split())
+# print(word_break[0][:l])
+
+word_break = word_break[0][:l]
+
+explanations = bench.explain(sentence, target=1)
+df = bench.get_dataframe(explanations)
+df2 = pd.DataFrame([],columns=['Token']+sentence.split())
+
+for i,row in df.iterrows():
+    data = [row.name]
+    idx = 1
+    for offset in word_break:
+        ml = list(row[df.columns[idx:idx+offset]])
+        val = sum(ml)/len(ml) # averaging
+        data.append(val)
+        idx+=offset
+    df2.loc[len(df2)] = data
+
+print(df)
+print(df2)
 
 

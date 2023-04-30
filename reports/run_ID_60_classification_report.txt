@@ -1,0 +1,32 @@
+=====================RUN ID:  60=======================
+hatespeech-training.py --split 3 --max_len 300 --bias_in_fc True --add_cls_sep_tokens False --epochs 10 --encoder_frozen False --encoder_name roberta-base --data_path data/ --checkpoint_path . --message retraining roberta with new tokenize_word_ritwik function (it takes care of spaces) --dummy False --run_ID 60 --drop_out 0.40 --bert_lr 5e-7 --ft_lr 1e-6 MESSAGE : retraining roberta with new tokenize_word_ritwik function (it takes care of spaces)
+FINE TUNING LAYERS: 
+flat_dense): Linear(in_features=230400, out_features=768, bias=True)
+  (relu1): ReLU()
+  (fc1): Linear(in_features=768, out_features=128, bias=True)
+  (dropout1): Dropout(p=0.1, inplace=False)
+  (relu2): ReLU()
+  (fc2): Linear(in_features=128, out_features=2, bias=True)
+  (log_softmax): LogSoftmax(dim=1)
+
+Bert layers learning_rate: 5e-07finetuning Layers Learning rate: 1e-06encoder_name: roberta-base
+encoder_frozen?: False
+bias_in_fc?: True
+cls_token?: False
+Data split: 3
+Sun Apr 30 21:17:30 2023
+
+EPOCH: 1/10
+Training Loss: 0.643, Training Accuracy : 0.600
+Validation Loss: 0.669, Validation Accuracy : 0.606
+
+              precision    recall  f1-score   support
+
+           0       0.82      0.04      0.07       781
+           1       0.60      0.99      0.75      1141
+
+    accuracy                           0.61      1922
+   macro avg       0.71      0.52      0.41      1922
+weighted avg       0.69      0.61      0.47      1922
+
+

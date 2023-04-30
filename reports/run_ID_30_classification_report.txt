@@ -259,3 +259,17 @@ Testing Accuracy : 0.630
 weighted avg       0.65      0.63      0.54      1922
 
 
+======= hatexplain metrics on: trained_models/runID-30-checkpoint.pth==========
+ajeet-calculate-metrics2.py --method shap --faithfullness_filtering top-k --split 2 --model_path trained_models/runID-30-checkpoint.pth --data_path data/ --encoder_name bert-base-cased --drop_out 0.4 --encoder_frozen True --add_cls_sep_tokens False --max_len 300 
+Begin Sun Apr 30 04:02:28 2023
+End Sun Apr 30 06:51:47 2023
+
+Plausibility
+IOU F1 :0.19202680755269214
+Token F1 :0.28446895279893275
+AUPRC :0.5841859530454996
+
+Faithfulness
+Comprehensiveness :0.10518391241352758
+Sufficiency :0.09043247634885536
+0.19202680755269214	0.28446895279893275	0.5841859530454996	0.10518391241352758	0.09043247634885536
