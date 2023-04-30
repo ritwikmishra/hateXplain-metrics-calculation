@@ -78,7 +78,7 @@ import argparse, sys
 
 parser = argparse.ArgumentParser(description='to generate LRP & LIME scores on test_data in ERASER format')
 
-parser.add_argument('--method', type=str, help='method if lrp then enter 0/1/2, if lime then enter "lime", if "shap" then enter "shape"')
+parser.add_argument('--method', type=str, help='method if lrp then enter 0/1/2, "lime1"/"lime2"/"shap"/"random"')
 parser.add_argument('--faithfullness_filtering', type=str, help='top-k tokens or above a threshold, top-k/0.5', default='top-k')
 parser.add_argument('--split', type=int, help='data split, 1/2/3')
 parser.add_argument('--model_path', type=str, help='path of model checkpoints using which LRP/LIME scores needed to calculate')
@@ -847,7 +847,7 @@ class MODEL(nn.Module):
         x = self.fc2(x)    
         x = self.log_softmax(x)
 
-        if args.method == 'lime2' or args.method == 'shap':
+        if args.method == 'lime2' or args.method == 'shap' or args.method == 'random':
             return transformers.modeling_outputs.SequenceClassifierOutput({'logits':x})
         return  x, first_fc_layer_emb, word_level_embedding_flat
         # return output, dense_layer_emb,  word_level_embedding_flat #also returning word_level_embedding to use it in calculating relevance at word-level
@@ -874,7 +874,7 @@ class MODEL(nn.Module):
 
       #get prediction from model
         with torch.no_grad():
-            if args.method == 'lime2' or args.method == 'shap':
+            if args.method == 'lime2' or args.method == 'shap' or args.method == 'random':
                 output = self.forward(input_ids, attention_mask, word_break, word_break_len)
             else:
                 logits, first_fc_layer_emb, word_level_embedding_flat = self.forward(input_ids, attention_mask, word_break, word_break_len)
@@ -1396,7 +1396,7 @@ hateXplain_df = hateXplain_df.T
 
 # for THRESHOLD in thresholds:
 
-if args.method!='lime1' and args.method!='lime2' and args.method!='shap':
+if args.method!='lime1' and args.method!='lime2' and args.method!='shap' and args.method!='random':
     for i in range(0, 1):
         LRP_VARIANT = int(args.method)
         THRESHOLD =0.50
@@ -1858,7 +1858,7 @@ if args.method!='lime1' and args.method!='lime2' and args.method!='shap':
 
 #   "========================LIME EXPLANATIONS IN ERASER FORMAT=========================="
 
-elif args.method=='lime1' or args.method=='lime2' :
+elif args.method=='lime1' or args.method=='lime2' or args.method = 'random':
     hateXplain_df = pd.read_json(args.data_path+'dataset.json')
     hateXplain_df = hateXplain_df.T
     thresholds = [0.50, 0.55, 0.60, 0.65]
@@ -1974,6 +1974,13 @@ elif args.method=='lime1' or args.method=='lime2' :
                 # print(lime_score_list)
 
  
+
+             elif args.method =='random':
+                #generate random lime-score list
+                n  = len(text_tokens)
+                random_lime_score_list =  [random.uniform(0, 1) for i in range(n)]
+
+                lime_score_list = random_lime_score_list #changing the variable name to reuse the rest of the below code
             
             
             if len(lime_score_list) != len(text_tokens):
