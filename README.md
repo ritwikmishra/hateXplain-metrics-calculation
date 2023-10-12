@@ -33,5 +33,22 @@ Following three files should be in the same folder in which ajeet_calculate_metr
 # FOR HATEXPLAIN METRIC CALCULATION, example command
 `CUDA_VISIBLE_DEVICES=1 python ajeet-calculate-metrics.py.py --method lrp --faithfullness_filtering top-k --split 1 --model_path PATH_TO_MODEL --data_path PATH_TO_DATA_FOLDER --encoder_name bert-base-cased`
 
+# Cite
+
+```
+@inproceedings{mathew2021hatexplain,
+  title={HateXplain: A Benchmark Dataset for Explainable Hate Speech Detection},
+  author={Mathew, Binny and Saha, Punyajoy and Yimam, Seid Muhie and Biemann, Chris and Goyal, Pawan and Mukherjee, Animesh},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={35},
+  number={17},
+  pages={14867--14875},
+  year={2021}
+}
+```
+
+```
+To be updated
+```
 
 
