@@ -36,6 +36,18 @@ Following three files should be in the same folder in which ajeet_calculate_metr
 # Cite
 
 ```
+@inproceedings{mishra2023explaining,
+  title={Explaining Finetuned Transformers on Hate Speech Predictions Using Layerwise Relevance Propagation},
+  author={Mishra, Ritwik and Yadav, Ajeet and Shah, Rajiv Ratn and Kumaraguru, Ponnurangam},
+  booktitle={International Conference on Big Data Analytics},
+  pages={201--214},
+  year={2023},
+  organization={Springer}
+}
+
+```
+If you use the dataset in your work then consider citing the following:
+```
 @inproceedings{mathew2021hatexplain,
   title={HateXplain: A Benchmark Dataset for Explainable Hate Speech Detection},
   author={Mathew, Binny and Saha, Punyajoy and Yimam, Seid Muhie and Biemann, Chris and Goyal, Pawan and Mukherjee, Animesh},
@@ -46,9 +58,17 @@ Following three files should be in the same folder in which ajeet_calculate_metr
   year={2021}
 }
 ```
+If you use ferret library then consider citing the following:
+```
+@inproceedings{attanasio-etal-2023-ferret,
+    title = "ferret: a Framework for Benchmarking Explainers on Transformers",
+    author = "Attanasio, Giuseppe and Pastor, Eliana and Di Bonaventura, Chiara and Nozza, Debora",
+    booktitle = "Proceedings of the 17th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations",
+    month = may,
+    year = "2023",
+    publisher = "Association for Computational Linguistics",
+}
+```
 
-```
-To be updated
-```
 
 
